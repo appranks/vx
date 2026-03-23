@@ -85,7 +85,7 @@ function buildVictoriaTraces(): ServiceDef {
 function buildOtelCollector(): ServiceDef {
 	return {
 		image: IMAGES.otelCollector,
-		ports: ["4317:4317", "4318:4318"],
+		ports: ["4317:4317", "4318:4318", "13133:13133"],
 		volumes: ["./otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro"],
 		networks: [VX_NETWORK],
 		healthcheck: {

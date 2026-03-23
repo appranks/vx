@@ -27,5 +27,5 @@ export const HEALTH_ENDPOINTS = [
 	{ name: "victoria-metrics", url: "http://localhost:8428/health" },
 	{ name: "victoria-logs", url: "http://localhost:9428/health" },
 	{ name: "victoria-traces", url: "http://localhost:10428/health" },
-	{ name: "otel-collector", url: "http://localhost:4318/" },
+	{ name: "otel-collector", url: "http://localhost:13133/" },
 ] as const;
