@@ -1,0 +1,22 @@
+{
+  "name": "@lemn/vx",
+  "version": "0.0.1",
+  "description": "Ephemeral observability for coding agents",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/appranks/vx.git"
+  },
+  "bin": {
+    "vx": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "bun build src/cli.ts --outdir dist --target bun",
+    "dev": "bun run src/cli.ts"
+  },
+  "engines": {
+    "node": ">=22",
+    "bun": ">=1.2"
+  }
+}
