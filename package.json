@@ -9,7 +9,7 @@
     "url": "https://github.com/appranks/vx.git"
   },
   "bin": {
-    "vx": "./bin/vx"
+    "vx": "./bin/vx.js"
   },
   "files": [
     "bin",
