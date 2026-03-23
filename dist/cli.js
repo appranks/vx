@@ -924,6 +924,9 @@ ${rest.join(`
         return `${pad}${key}:`;
       }
       if (typeof val === "object") {
+        if (!Array.isArray(val) && Object.keys(val).length === 0) {
+          return `${pad}${key}: {}`;
+        }
         const nested = toYaml(val, indent + 1);
         return `${pad}${key}:
 ${nested}`;
