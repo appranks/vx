@@ -9,9 +9,9 @@ describe("buildOtelConfig", () => {
 
 	it("has three exporters for metrics, logs, and traces", () => {
 		const config = buildOtelConfig();
-		expect(config.exporters).toHaveProperty("otlphttp_metrics");
-		expect(config.exporters).toHaveProperty("otlphttp_logs");
-		expect(config.exporters).toHaveProperty("otlphttp_traces");
+		expect(config.exporters).toHaveProperty("otlphttp/metrics");
+		expect(config.exporters).toHaveProperty("otlphttp/logs");
+		expect(config.exporters).toHaveProperty("otlphttp/traces");
 	});
 
 	it("has batch processor", () => {
@@ -36,7 +36,7 @@ describe("buildOtelConfig", () => {
 
 	it("metrics pipeline exports to otlphttp_metrics", () => {
 		const config = buildOtelConfig();
-		expect(config.service.pipelines.metrics.exporters).toContain("otlphttp_metrics");
+		expect(config.service.pipelines.metrics.exporters).toContain("otlphttp/metrics");
 	});
 
 	it("has health_check extension", () => {

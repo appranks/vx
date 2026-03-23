@@ -23,15 +23,15 @@ export function buildOtelConfig(): OtelConfig {
 			},
 		},
 		exporters: {
-			otlphttp_metrics: {
+			"otlphttp/metrics": {
 				endpoint: "http://victoria-metrics:8428",
 				tls: { insecure: true },
 			},
-			otlphttp_logs: {
+			"otlphttp/logs": {
 				endpoint: "http://victoria-logs:9428/insert/opentelemetry",
 				tls: { insecure: true },
 			},
-			otlphttp_traces: {
+			"otlphttp/traces": {
 				endpoint: "http://victoria-traces:10428/insert/opentelemetry",
 				tls: { insecure: true },
 			},
@@ -50,17 +50,17 @@ export function buildOtelConfig(): OtelConfig {
 				metrics: {
 					receivers: ["otlp"],
 					processors: ["batch"],
-					exporters: ["otlphttp_metrics"],
+					exporters: ["otlphttp/metrics"],
 				},
 				logs: {
 					receivers: ["otlp"],
 					processors: ["batch"],
-					exporters: ["otlphttp_logs"],
+					exporters: ["otlphttp/logs"],
 				},
 				traces: {
 					receivers: ["otlp"],
 					processors: ["batch"],
-					exporters: ["otlphttp_traces"],
+					exporters: ["otlphttp/traces"],
 				},
 			},
 		},
