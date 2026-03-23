@@ -1206,7 +1206,7 @@ EXAMPLES
 // package.json
 var package_default = {
   name: "@appranks/vx",
-  version: "0.0.3",
+  version: "0.0.4",
   description: "Ephemeral observability for coding agents",
   type: "module",
   license: "MIT",
