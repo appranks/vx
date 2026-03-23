@@ -61,7 +61,7 @@ OTEL_SERVICE_NAME=my-service
 # OTEL_LOG_LEVEL=debug
 `;
 
-export async function initHono(ctx: CommandContext): Promise<void> {
+export async function initHono(ctx: CommandContext) {
 	const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
 	const cwd = process.cwd();
 
@@ -69,7 +69,7 @@ export async function initHono(ctx: CommandContext): Promise<void> {
 	const envResult = await writeIfNotExists(join(cwd, ".env.otel"), ENV_OTEL, force);
 	const depResult = await injectDependencies(HONO_DEPS);
 
-	ctx.output.print({
+	return {
 		preset: "hono",
 		files: [
 			{ path: "instrumentation.ts", action: instrumentationResult },
@@ -82,5 +82,5 @@ export async function initHono(ctx: CommandContext): Promise<void> {
 			"Import instrumentation.ts as the first import in your entry file",
 			"Wrap your Hono app with instrument() from @hono/otel",
 		],
-	});
+	};
 }

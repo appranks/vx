@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFlag, parseGlobalFlags, stripFlags } from "./args.ts";
+import { parseFlag, parseGlobalFlags, stripFlags } from "../args.ts";
 
 describe("parseGlobalFlags", () => {
 	it("detects --json flag", () => {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildMockContext } from "../../tests/helpers/mock-context.ts";
-import { runMetrics } from "./metrics.ts";
+import { buildMockContext } from "../../../tests/helpers/mock-context.ts";
+import { runMetrics } from "../metrics.ts";
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -34,7 +34,11 @@ describe("runMetrics", () => {
 		const ctx = buildMockContext({}, ["rate(http_requests_total[5m])"]);
 		await runMetrics(ctx);
 		expect(ctx.printed).toHaveLength(1);
-		const output = ctx.printed[0] as { query: string; count: number; results: unknown[] };
+		const output = ctx.printed[0] as {
+			query: string;
+			count: number;
+			results: unknown[];
+		};
 		expect(output.query).toBe("rate(http_requests_total[5m])");
 		expect(output.count).toBe(1);
 	});

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { IMAGES, VX_PROJECT_NAME } from "../lib/constants.ts";
-import { buildComposeConfig } from "./compose.ts";
+import { IMAGES, VX_PROJECT_NAME } from "../../lib/constants.ts";
+import { buildComposeConfig } from "../compose.ts";
 
 describe("buildComposeConfig", () => {
 	it("uses the vx project name", () => {

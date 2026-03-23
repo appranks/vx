@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildMockContext } from "../../tests/helpers/mock-context.ts";
-import { runSnippet } from "./snippet.ts";
+import { buildMockContext } from "../../../tests/helpers/mock-context.ts";
+import { runSnippet } from "../snippet.ts";
 
 describe("runSnippet", () => {
 	it("prints snippet containing vx commands", async () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { checkPortsAvailable } from "./ports.ts";
+import { checkPortsAvailable } from "../ports.ts";
 
 afterEach(() => {
 	vi.restoreAllMocks();

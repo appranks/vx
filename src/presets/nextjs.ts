@@ -27,7 +27,7 @@ OTEL_SERVICE_NAME=my-nextjs-app
 # OTEL_LOG_LEVEL=debug
 `;
 
-export async function initNextjs(ctx: CommandContext): Promise<void> {
+export async function initNextjs(ctx: CommandContext) {
 	const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
 	const cwd = process.cwd();
 
@@ -35,7 +35,7 @@ export async function initNextjs(ctx: CommandContext): Promise<void> {
 	const envResult = await writeIfNotExists(join(cwd, ".env.otel"), ENV_OTEL, force);
 	const depResult = await injectDependencies(NEXTJS_DEPS);
 
-	ctx.output.print({
+	return {
 		preset: "nextjs",
 		files: [
 			{ path: "instrumentation.ts", action: instrumentationResult },
@@ -47,5 +47,5 @@ export async function initNextjs(ctx: CommandContext): Promise<void> {
 			"Add OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 to your .env.local",
 			"Next.js will automatically call register() from instrumentation.ts",
 		],
-	});
+	};
 }

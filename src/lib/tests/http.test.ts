@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { QueryError, queryLogs, queryMetrics, queryTraces, StackUnreachableError, victoriaGet } from "./http.ts";
+import { QueryError, queryLogs, queryMetrics, queryTraces, StackUnreachableError, victoriaGet } from "../http.ts";
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -51,7 +51,13 @@ describe("queryMetrics", () => {
 
 	it("throws QueryError when status is not success", async () => {
 		global.fetch = (vi.fn() as any).mockResolvedValueOnce(
-			new Response(JSON.stringify({ status: "error", data: { resultType: "vector", result: [] } }), { status: 200 }),
+			new Response(
+				JSON.stringify({
+					status: "error",
+					data: { resultType: "vector", result: [] },
+				}),
+				{ status: 200 },
+			),
 		);
 
 		await expect(queryMetrics("bad")).rejects.toThrow(QueryError);
@@ -61,8 +67,16 @@ describe("queryMetrics", () => {
 describe("queryLogs", () => {
 	it("parses JSON Lines response into array of LogEntry", async () => {
 		const ndjson = [
-			JSON.stringify({ _msg: "error A", _stream: "{}", _time: "2026-01-01T00:00:00Z" }),
-			JSON.stringify({ _msg: "error B", _stream: "{}", _time: "2026-01-01T00:00:01Z" }),
+			JSON.stringify({
+				_msg: "error A",
+				_stream: "{}",
+				_time: "2026-01-01T00:00:00Z",
+			}),
+			JSON.stringify({
+				_msg: "error B",
+				_stream: "{}",
+				_time: "2026-01-01T00:00:01Z",
+			}),
 			"",
 		].join("\n");
 

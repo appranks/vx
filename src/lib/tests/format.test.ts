@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatQueryResult } from "./format.ts";
+import { formatQueryResult } from "../format.ts";
 
 describe("formatQueryResult", () => {
 	it("wraps results with query and count", () => {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GlobalFlags } from "./args.ts";
-import { buildOutputHelper } from "./output.ts";
+import type { GlobalFlags } from "../args.ts";
+import { buildOutputHelper } from "../output.ts";
 
 const baseFlags: GlobalFlags = {
 	json: false,
@@ -40,7 +40,11 @@ describe("buildOutputHelper", () => {
 
 	it("printHuman outputs text when quiet is false", () => {
 		const writeSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
-		const helper = buildOutputHelper({ ...baseFlags, json: true, quiet: false });
+		const helper = buildOutputHelper({
+			...baseFlags,
+			json: true,
+			quiet: false,
+		});
 		helper.printHuman("hello");
 		expect(writeSpy).toHaveBeenCalledWith("hello\n");
 	});

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildMockContext } from "../../tests/helpers/mock-context.ts";
-import { runInit } from "./init.ts";
+import { buildMockContext } from "../../../tests/helpers/mock-context.ts";
+import { runInit } from "../init.ts";
 
 afterEach(() => {
 	vi.restoreAllMocks();

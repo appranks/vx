@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getComposePath, getOtelConfigPath, getVxDir } from "./paths.ts";
+import { getComposePath, getOtelConfigPath, getVxDir } from "../paths.ts";
 
 describe("getVxDir", () => {
 	it("returns .vx relative to cwd", () => {

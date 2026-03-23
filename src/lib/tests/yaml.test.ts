@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toYaml } from "./yaml.ts";
+import { toYaml } from "../yaml.ts";
 
 describe("toYaml", () => {
 	it("serializes a simple object", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildOtelConfig } from "./otel.ts";
+import { buildOtelConfig } from "../otel.ts";
 
 describe("buildOtelConfig", () => {
 	it("has otlp receiver", () => {

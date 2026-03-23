@@ -60,7 +60,7 @@ OTEL_SERVICE_NAME=my-service
 # OTEL_LOG_LEVEL=debug
 `;
 
-export async function initGeneric(ctx: CommandContext): Promise<void> {
+export async function initGeneric(ctx: CommandContext) {
 	const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
 	const cwd = process.cwd();
 
@@ -68,7 +68,7 @@ export async function initGeneric(ctx: CommandContext): Promise<void> {
 	const envResult = await writeIfNotExists(join(cwd, ".env.otel"), ENV_OTEL, force);
 	const depResult = await injectDependencies(GENERIC_DEPS);
 
-	ctx.output.print({
+	return {
 		preset: "generic",
 		files: [
 			{ path: "instrumentation.ts", action: instrumentationResult },
@@ -81,5 +81,5 @@ export async function initGeneric(ctx: CommandContext): Promise<void> {
 			"Import instrumentation.ts as the first import in your entry file",
 			"Add manual spans for your framework routes and operations",
 		],
-	});
+	};
 }
