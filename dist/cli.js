@@ -1212,7 +1212,7 @@ var package_default = {
     url: "https://github.com/appranks/vx.git"
   },
   bin: {
-    vx: "./bin/vx"
+    vx: "./bin/vx.js"
   },
   files: [
     "bin",
@@ -1232,6 +1232,7 @@ var package_default = {
     test: "vitest run",
     "test:watch": "vitest",
     validate: "bun run scripts/validate.ts",
+    "publish:gpr": "npm publish",
     prepare: "husky"
   },
   engines: {

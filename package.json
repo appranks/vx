@@ -29,6 +29,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "bun run scripts/validate.ts",
+    "publish:gpr": "npm publish",
     "prepare": "husky"
   },
   "engines": {

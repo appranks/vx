@@ -4,25 +4,30 @@ Ephemeral observability for coding agents. Spins up a lightweight Victoria Metri
 
 ## Install
 
-Add the GitHub Packages registry for `@appranks` to your project's `.npmrc`:
+**1. Add the GitHub Packages registry** to your project's `.npmrc`:
 
 ```
 @appranks:registry=https://npm.pkg.github.com
 ```
 
-Then install:
+**2. Install:**
 
 ```bash
-pnpm add -D @appranks/vx
+pnpm add -Dw @appranks/vx
+```
+
+**3. Integrate:**
+
+```bash
+npx vx init      # generates instrumentation.ts, .env.otel, CLAUDE.md block
+pnpm install     # install OTel dependencies
 ```
 
 ## Quick start
 
 ```bash
-# Install and integrate (one-time setup)
-pnpm add -D @appranks/vx
-npx vx init      # generates instrumentation.ts, .env.otel, CLAUDE.md block
-pnpm install     # install OTel dependencies
+# Start the observability stack
+npx vx up
 
 # Start the observability stack
 npx vx up
@@ -106,6 +111,21 @@ bun run check         # TypeScript type-check
 bun run lint          # Biome check
 bun run test          # Vitest
 bun run validate      # All gates (format, lint, check, test, build)
+```
+
+## Publishing
+
+Publishing is fully automated. Every push to `main` triggers a GitHub Action that:
+
+1. Runs `validate` (format, lint, check, test, build)
+2. Bumps the patch version
+3. Publishes to GitHub Packages
+4. Commits the version bump back
+
+To publish manually:
+
+```bash
+bun run publish:gpr
 ```
 
 ## License
