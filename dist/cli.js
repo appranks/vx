@@ -1214,6 +1214,14 @@ var package_default = {
   bin: {
     vx: "./bin/vx"
   },
+  files: [
+    "bin",
+    "dist"
+  ],
+  publishConfig: {
+    registry: "https://npm.pkg.github.com",
+    access: "public"
+  },
   scripts: {
     dev: "bun run src/cli.ts",
     build: "bun build src/cli.ts --outdir dist --target bun",

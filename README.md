@@ -4,33 +4,41 @@ Ephemeral observability for coding agents. Spins up a lightweight Victoria Metri
 
 ## Install
 
+Add the GitHub Packages registry for `@appranks` to your project's `.npmrc`:
+
+```
+@appranks:registry=https://npm.pkg.github.com
+```
+
+Then install:
+
 ```bash
-pnpm add -D github:appranks/vx
+pnpm add -D @appranks/vx
 ```
 
 ## Quick start
 
 ```bash
 # Install and integrate (one-time setup)
-pnpm add -D github:appranks/vx
-vx init          # generates instrumentation.ts, .env.otel, CLAUDE.md block
+pnpm add -D @appranks/vx
+npx vx init      # generates instrumentation.ts, .env.otel, CLAUDE.md block
 pnpm install     # install OTel dependencies
 
 # Start the observability stack
-vx up
+npx vx up
 
 # Query what's happening
-vx metrics 'rate(http_requests_total[5m])'
-vx logs '{app="api"} error _time:5m'
-vx traces 'resource_attr:service.name:"api"'
+npx vx metrics 'rate(http_requests_total[5m])'
+npx vx logs '{app="api"} error _time:5m'
+npx vx traces 'resource_attr:service.name:"api"'
 
 # Quality gates
-vx check health
-vx check latency 'http_request_duration_seconds' --p99 --max=2s
-vx check errors '{app="api"} error' --max=0
+npx vx check health
+npx vx check latency 'http_request_duration_seconds' --p99 --max=2s
+npx vx check errors '{app="api"} error' --max=0
 
 # Done — destroy everything
-vx down
+npx vx down
 ```
 
 `vx init` auto-detects your framework, generates OTel instrumentation, and writes a `## vx` block to your project's `CLAUDE.md` so the coding agent knows `vx` is available.
@@ -97,6 +105,7 @@ bun run build         # Compile to dist/
 bun run check         # TypeScript type-check
 bun run lint          # Biome check
 bun run test          # Vitest
+bun run validate      # All gates (format, lint, check, test, build)
 ```
 
 ## License
