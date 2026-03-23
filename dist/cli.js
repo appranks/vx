@@ -165,6 +165,40 @@ async function queryTraces(query, limit = 50) {
   }));
 }
 
+// src/lib/style.ts
+var enabled = process.stdout.isTTY ?? false;
+function esc(code) {
+  return enabled ? `\x1B[${code}m` : "";
+}
+var c = {
+  reset: esc("0"),
+  bold: esc("1"),
+  dim: esc("2"),
+  red: esc("31"),
+  green: esc("32"),
+  yellow: esc("33"),
+  cyan: esc("36"),
+  gray: esc("90")
+};
+var icon = {
+  ok: enabled ? "\u2713" : "ok",
+  fail: enabled ? "\u2717" : "fail",
+  dot: enabled ? "\u25CF" : "*",
+  circle: enabled ? "\u25CB" : "o",
+  arrow: enabled ? "\u25B8" : ">",
+  warn: enabled ? "\u26A0" : "!",
+  skip: enabled ? "\u2298" : "-"
+};
+function st(style, text) {
+  if (!enabled)
+    return text;
+  return `${style}${text}${c.reset}`;
+}
+var ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, "g");
+function visibleLength(text) {
+  return text.replace(ANSI_PATTERN, "").length;
+}
+
 // src/commands/check.ts
 async function runCheck(ctx) {
   const gate = ctx.args[0];
@@ -184,10 +218,19 @@ async function runCheck(ctx) {
       exitWith(EXIT.USER_ERROR);
   }
 }
+function formatGate(passed, gate, detail) {
+  const sym = passed ? st(c.green, icon.ok) : st(c.red, icon.fail);
+  const status = passed ? "passed" : st(c.red, "failed");
+  return `  ${sym} ${st(c.bold, gate)} ${st(c.dim, "\u2014")} ${status}  ${st(c.dim, detail)}`;
+}
 async function checkHealth(ctx) {
   const healthy = await isStackRunning();
   if (healthy) {
-    ctx.output.print({ gate: "health", status: "passed", message: "all services healthy" });
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatGate(true, "health", "all services healthy"));
+    } else {
+      ctx.output.print({ gate: "health", status: "passed", message: "all services healthy" });
+    }
   } else {
     ctx.output.error("health check failed", "one or more services are not responding");
     exitWith(EXIT.USER_ERROR);
@@ -215,16 +258,28 @@ async function checkLatency(ctx) {
   try {
     const result = await queryMetrics(wrappedQuery);
     if (result.result.length === 0) {
-      ctx.output.print({ gate: "latency", status: "passed", message: "no data", value: null, max: maxStr });
+      if (ctx.output.isHuman) {
+        ctx.output.printHuman(formatGate(true, "latency", `no data (max ${maxStr})`));
+      } else {
+        ctx.output.print({ gate: "latency", status: "passed", message: "no data", value: null, max: maxStr });
+      }
       return;
     }
     const value = Number.parseFloat(result.result[0].value[1]);
-    if (value <= maxSeconds) {
-      ctx.output.print({ gate: "latency", status: "passed", value, max: maxSeconds, query: wrappedQuery });
+    const passed = value <= maxSeconds;
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatGate(passed, "latency", `${value.toFixed(2)}s (max ${maxSeconds}s)`));
     } else {
-      ctx.output.print({ gate: "latency", status: "failed", value, max: maxSeconds, query: wrappedQuery });
-      exitWith(EXIT.USER_ERROR);
+      ctx.output.print({
+        gate: "latency",
+        status: passed ? "passed" : "failed",
+        value,
+        max: maxSeconds,
+        query: wrappedQuery
+      });
     }
+    if (!passed)
+      exitWith(EXIT.USER_ERROR);
   } catch (err) {
     if (err instanceof QueryError) {
       ctx.output.error(err.message);
@@ -257,12 +312,14 @@ async function checkErrors(ctx) {
   try {
     const entries = await queryLogs(query, maxCount + 1);
     const count = entries.length;
-    if (count <= maxCount) {
-      ctx.output.print({ gate: "errors", status: "passed", count, max: maxCount, query });
+    const passed = count <= maxCount;
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatGate(passed, "errors", `${count} found (max ${maxCount})`));
     } else {
-      ctx.output.print({ gate: "errors", status: "failed", count, max: maxCount, query });
-      exitWith(EXIT.USER_ERROR);
+      ctx.output.print({ gate: "errors", status: passed ? "passed" : "failed", count, max: maxCount, query });
     }
+    if (!passed)
+      exitWith(EXIT.USER_ERROR);
   } catch (err) {
     if (err instanceof QueryError) {
       ctx.output.error(err.message);
@@ -326,7 +383,11 @@ async function runDown(ctx) {
   const composePath = getComposePath();
   const composeExists = await Bun.file(composePath).exists();
   if (!composeExists) {
-    ctx.output.print({ status: "not_running", message: "no stack to stop" });
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(`  ${st(c.dim, icon.circle)} no stack to stop`);
+    } else {
+      ctx.output.print({ status: "not_running", message: "no stack to stop" });
+    }
     return;
   }
   const result = composeRun(["down", "--volumes", "--remove-orphans"], composePath);
@@ -334,12 +395,16 @@ async function runDown(ctx) {
     ctx.output.error("docker compose down failed", result.stderr);
     exitWith(EXIT.STACK_ERROR);
   }
-  ctx.output.print({ status: "stopped", message: "stack destroyed, all data removed" });
+  if (ctx.output.isHuman) {
+    ctx.output.printHuman(`  ${st(c.dim, icon.circle)} stack destroyed, all data removed`);
+  } else {
+    ctx.output.print({ status: "stopped", message: "stack destroyed, all data removed" });
+  }
 }
 
 // src/commands/init.ts
 import { mkdir as mkdir2 } from "fs/promises";
-import { join as join3 } from "path";
+import { join as join2 } from "path";
 
 // src/lib/preset-writer.ts
 async function writeIfNotExists(path, content, force) {
@@ -383,14 +448,254 @@ ${block}
 }
 
 // src/skills/content.ts
-import { readFileSync } from "fs";
-import { join as join2 } from "path";
-function readSkill(name) {
-  const path = join2(import.meta.dirname, `${name}.md`);
-  return readFileSync(path, "utf-8");
+var VX_SETUP_SKILL = `---
+name: vx-setup
+description: Configure OpenTelemetry instrumentation for this project to work with vx observability stack
+---
+
+# vx-setup \u2014 Configure OpenTelemetry for vx
+
+Configure the minimum viable OpenTelemetry setup so this project sends telemetry to the vx stack at \`http://localhost:4318\`.
+
+## Phase 1: Analyze the project
+
+1. Read root \`package.json\`. Check for \`workspaces\` field or \`pnpm-workspace.yaml\`.
+2. If monorepo: identify app directories (typically \`apps/*\`).
+3. For each app (or root if single-package):
+   - Detect framework from dependencies: \`@nestjs/core\`, \`hono\`, \`next\`, \`express\`, \`fastify\`, \`@temporalio/worker\`
+   - Search for existing OTel: grep for \`@opentelemetry\`, \`OTLPTraceExporter\`, \`NodeSDK\`, \`registerOTel\`, \`@hono/otel\` in \`src/\` files
+   - Check for \`tracing.ts\`, \`instrumentation.ts\`, or \`telemetry.ts\` files
+   - If found: read the file, note the OTLP exporter URL
+   - Check env files (\`.env\`, \`.env.local\`, \`.env.development\`) for \`OTEL_COLLECTOR_URL\` or \`OTEL_EXPORTER_OTLP_ENDPOINT\`
+
+## Phase 2: Decide per app
+
+Apply the FIRST matching rule:
+
+| Condition | Action |
+|-----------|--------|
+| OTel exists AND exports to \`:4318\` | Report: "Already compatible. No changes needed." |
+| OTel exists AND uses env var defaulting to \`:4318\` | Report: "Already compatible via env default." |
+| OTel exists AND exports to different URL | Add/update env var \`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318\` in \`.env.local\` or equivalent. ONE change. |
+| No OTel AND NestJS or Fastify (Node) | Apply template: **nestjs-node** |
+| No OTel AND Hono (Bun runtime) | Apply template: **hono-bun** |
+| No OTel AND Next.js | Apply template: **nextjs** |
+| No OTel AND Express (Node) | Apply template: **nestjs-node** (same pattern) |
+| No OTel AND unknown framework | Apply template: **generic-node** |
+
+## Phase 3: Apply template (only if no OTel exists)
+
+### Template: nestjs-node
+
+Create \`src/tracing.ts\`:
+
+\`\`\`typescript
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { Resource } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+
+const sdk = new NodeSDK({
+  resource: new Resource({
+    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "my-service",
+  }),
+  traceExporter: new OTLPTraceExporter({
+    url: \\\`\\\${process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318"}/v1/traces\\\`,
+  }),
+  instrumentations: [
+    getNodeAutoInstrumentations({
+      "@opentelemetry/instrumentation-fs": { enabled: false },
+      "@opentelemetry/instrumentation-dns": { enabled: false },
+      "@opentelemetry/instrumentation-net": { enabled: false },
+    }),
+  ],
+});
+
+sdk.start();
+process.on("SIGTERM", () => sdk.shutdown());
+\`\`\`
+
+Add to entry point: \`import "./tracing";\` as the FIRST import in \`main.ts\` or equivalent.
+
+Dependencies to add:
+\`\`\`
+@opentelemetry/api@1.9.0
+@opentelemetry/sdk-node@0.213.0
+@opentelemetry/auto-instrumentations-node@0.71.0
+@opentelemetry/exporter-trace-otlp-http@0.213.0
+@opentelemetry/resources@2.0.0
+@opentelemetry/semantic-conventions@1.35.0
+\`\`\`
+
+### Template: hono-bun
+
+Create \`instrumentation.ts\` in the app root:
+
+\`\`\`typescript
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { Resource } from "@opentelemetry/resources";
+import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+
+const sdk = new NodeSDK({
+  resource: new Resource({
+    [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "my-service",
+  }),
+  traceExporter: new OTLPTraceExporter({
+    url: \\\`\\\${process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318"}/v1/traces\\\`,
+  }),
+  // No auto-instrumentations: Bun lacks diagnostics_channel support
+});
+
+sdk.start();
+process.on("beforeExit", () => sdk.shutdown());
+\`\`\`
+
+Wrap the Hono app: \`export default instrument(app)\` using \`import { instrument } from "@hono/otel"\`.
+
+Dependencies to add:
+\`\`\`
+@hono/otel@1.1.1
+@opentelemetry/api@1.9.0
+@opentelemetry/sdk-node@0.213.0
+@opentelemetry/exporter-trace-otlp-http@0.213.0
+@opentelemetry/resources@2.0.0
+@opentelemetry/semantic-conventions@1.35.0
+\`\`\`
+
+IMPORTANT: NEVER add \`@opentelemetry/auto-instrumentations-node\` for Bun projects.
+
+### Template: nextjs
+
+Create \`instrumentation.ts\` in the app root (Next.js discovers it automatically):
+
+\`\`\`typescript
+import { registerOTel } from "@vercel/otel";
+
+export function register() {
+  registerOTel({
+    serviceName: process.env.OTEL_SERVICE_NAME ?? "my-nextjs-app",
+  });
 }
-var VX_SETUP_SKILL = readSkill("vx-setup");
-var VX_VERIFY_SKILL = readSkill("vx-verify");
+\`\`\`
+
+Add to \`.env.local\`:
+\`\`\`
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+\`\`\`
+
+Dependencies to add:
+\`\`\`
+@vercel/otel@2.1.1
+@opentelemetry/api@1.9.0
+\`\`\`
+
+### Template: generic-node
+
+Same as **nestjs-node** template.
+
+## Phase 4: After changes
+
+1. Run the project's package manager install command (\`pnpm install\`, \`bun install\`, etc.)
+2. Run the project's type checker if available (\`tsc --noEmit\`, \`bun run check\`, etc.)
+3. Tell the user: "Run \\\`/vx-verify\\\` to confirm telemetry flows correctly."
+
+## Rules
+
+1. NEVER overwrite an existing tracing/instrumentation file. If it exists, analyze it \u2014 don't replace it.
+2. NEVER remove existing OTel configuration or dependencies.
+3. If existing OTel already points to \`:4318\`, do NOTHING. Report success.
+4. Prefer environment variables over hardcoded URLs. Use \`OTEL_EXPORTER_OTLP_ENDPOINT\` when possible.
+5. Bun runtime NEVER gets \`@opentelemetry/auto-instrumentations-node\`.
+6. The OTLP endpoint is always \`http://localhost:4318\` (HTTP, not gRPC).
+7. For monorepos: report findings per workspace. Handle each independently.
+8. When adding dependencies, respect existing versions \u2014 never downgrade.
+9. After any code change, verify it compiles (run type checker).`;
+var VX_VERIFY_SKILL = `---
+name: vx-verify
+description: Verify that OpenTelemetry telemetry flows from the app to the vx observability stack
+---
+
+# vx-verify \u2014 Verify telemetry connection
+
+Confirm that the app sends telemetry to the vx stack and that queries return data.
+
+## Step 1: Check vx stack
+
+\`\`\`bash
+npx vx status
+\`\`\`
+
+- If all services show \`healthy\`: proceed to Step 2.
+- If any service is \`unreachable\`: run \`npx vx up\` and wait for it to complete, then re-check.
+- If \`vx up\` fails: report the error and stop.
+
+## Step 2: Identify the app
+
+- Read \`package.json\` for the start/dev command.
+- For monorepos: identify which app(s) have OTel configured (check for \`tracing.ts\` or \`instrumentation.ts\`).
+- Note the start command (e.g., \`pnpm dev\`, \`bun run dev\`, \`npm run dev\`).
+
+## Step 3: Ensure the app is running
+
+Ask the user:
+
+> Please start your app in a separate terminal with \`[detected start command]\` and confirm when it's running.
+
+If you can detect the app is already running (e.g., its port responds to HTTP), proceed directly.
+
+## Step 4: Query for telemetry
+
+Wait approximately 10 seconds after the app starts, then run:
+
+\`\`\`bash
+# Check for traces
+npx vx traces '*'
+
+# Check for metrics
+npx vx metrics 'up'
+
+# Check for logs (if app sends OTel logs)
+npx vx logs '*'
+\`\`\`
+
+## Step 5: Report results
+
+For each signal, report:
+
+| Signal  | Result | Details |
+|---------|--------|---------|
+| Traces  | Found N spans / No data | Show sample trace if found |
+| Metrics | Found N series / No data | Show sample metric if found |
+| Logs    | Found N entries / No data | Show sample log if found |
+
+If ALL signals return data: report SUCCESS.
+If SOME signals return data: report PARTIAL \u2014 explain which signals are missing and why (not all frameworks export all signals by default).
+If NO signals return data: proceed to Step 6.
+
+## Step 6: Diagnose (only if no telemetry found)
+
+Check these in order:
+
+1. **Is the tracing file loaded?**
+   - For NestJS/Node: check that \`import "./tracing"\` is the first import in the entry file, or that \`-r ./tracing.ts\` is in the start script.
+   - For Hono/Bun: check that \`--preload instrumentation.ts\` is in the start script.
+   - For Next.js: check that \`instrumentation.ts\` exists in the app root with an exported \`register()\` function.
+
+2. **Is the exporter URL correct?**
+   - Check that \`OTEL_EXPORTER_OTLP_ENDPOINT\` is set to \`http://localhost:4318\` in the env.
+   - Or check that the exporter URL in code points to \`http://localhost:4318\`.
+
+3. **Is the OTel Collector receiving connections?**
+   - Run \`npx vx status\` \u2014 the otel-collector should be \`healthy\`.
+   - Check collector health at \`http://localhost:13133/\`.
+
+4. **Enable OTel debug logging:**
+   - Suggest: set \`OTEL_LOG_LEVEL=debug\` in the app's environment and restart.
+   - Check stderr for OTel SDK initialization messages.
+
+Report findings and suggest fixes for each issue found.`;
 var CLAUDE_MD_BLOCK = `## vx
 
 This project uses \`vx\` for ephemeral runtime observability during development.
@@ -434,29 +739,52 @@ vx check errors '<logsql>' --max=0
 7. Run \`vx down\` when done`;
 
 // src/commands/init.ts
+function formatInitHuman(files, skills, nextSteps) {
+  const lines = [];
+  lines.push(`  ${st(c.bold, "FILES")}`);
+  for (const f of files) {
+    const actionStyle = f.action === "created" ? c.green : f.action === "appended" ? c.cyan : c.dim;
+    lines.push(`    ${st(actionStyle, f.action.padEnd(10))} ${f.path}`);
+  }
+  lines.push("");
+  lines.push(`  ${st(c.bold, "SKILLS")}`);
+  for (const s of skills) {
+    lines.push(`    ${st(c.cyan, icon.arrow)} ${s}`);
+  }
+  lines.push("");
+  lines.push(`  ${st(c.bold, "NEXT STEPS")}`);
+  for (let i = 0;i < nextSteps.length; i++) {
+    lines.push(`    ${st(c.dim, `${i + 1}.`)} ${nextSteps[i]}`);
+  }
+  return lines.join(`
+`);
+}
 async function runInit(ctx) {
   const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
   const cwd = process.cwd();
-  const setupDir = join3(cwd, ".claude", "skills", "vx-setup");
-  const verifyDir = join3(cwd, ".claude", "skills", "vx-verify");
+  const setupDir = join2(cwd, ".claude", "skills", "vx-setup");
+  const verifyDir = join2(cwd, ".claude", "skills", "vx-verify");
   await mkdir2(setupDir, { recursive: true });
   await mkdir2(verifyDir, { recursive: true });
-  const setupResult = await writeIfNotExists(join3(setupDir, "SKILL.md"), VX_SETUP_SKILL, force);
-  const verifyResult = await writeIfNotExists(join3(verifyDir, "SKILL.md"), VX_VERIFY_SKILL, force);
-  const claudeMdPath = join3(cwd, "CLAUDE.md");
+  const setupResult = await writeIfNotExists(join2(setupDir, "SKILL.md"), VX_SETUP_SKILL, force);
+  const verifyResult = await writeIfNotExists(join2(verifyDir, "SKILL.md"), VX_VERIFY_SKILL, force);
+  const claudeMdPath = join2(cwd, "CLAUDE.md");
   const claudeMdResult = await appendClaudeMd(claudeMdPath, CLAUDE_MD_BLOCK, force);
-  ctx.output.print({
-    files: [
-      { path: ".claude/skills/vx-setup/SKILL.md", action: setupResult },
-      { path: ".claude/skills/vx-verify/SKILL.md", action: verifyResult },
-      { path: "CLAUDE.md", action: claudeMdResult }
-    ],
-    skills: ["vx-setup", "vx-verify"],
-    next_steps: [
-      "Run /vx-setup to configure OpenTelemetry for this project",
-      "Run /vx-verify after setup to confirm telemetry is flowing"
-    ]
-  });
+  const files = [
+    { path: ".claude/skills/vx-setup/SKILL.md", action: setupResult },
+    { path: ".claude/skills/vx-verify/SKILL.md", action: verifyResult },
+    { path: "CLAUDE.md", action: claudeMdResult }
+  ];
+  const skills = ["vx-setup", "vx-verify"];
+  const nextSteps = [
+    "Run /vx-setup to configure OpenTelemetry for this project",
+    "Run /vx-verify after setup to confirm telemetry is flowing"
+  ];
+  if (ctx.output.isHuman) {
+    ctx.output.printHuman(formatInitHuman(files, skills, nextSteps));
+  } else {
+    ctx.output.print({ files, skills, next_steps: nextSteps });
+  }
 }
 
 // src/lib/format.ts
@@ -464,7 +792,42 @@ function formatQueryResult(query, results) {
   return { query, count: results.length, results };
 }
 
+// src/lib/table.ts
+function alignColumns(rows, gap = 2) {
+  if (rows.length === 0)
+    return [];
+  const colCount = Math.max(...rows.map((r) => r.length));
+  const widths = Array(colCount).fill(0);
+  for (const row of rows) {
+    for (let i = 0;i < row.length; i++) {
+      widths[i] = Math.max(widths[i], visibleLength(row[i]));
+    }
+  }
+  return rows.map((row) => {
+    const cells = row.map((cell, i) => {
+      if (i === row.length - 1)
+        return cell;
+      const vLen = visibleLength(cell);
+      return cell + " ".repeat(Math.max(0, widths[i] - vLen + gap));
+    });
+    return `  ${cells.join("")}`;
+  });
+}
+
 // src/commands/logs.ts
+function formatLogsHuman(query, entries) {
+  const lines = [];
+  lines.push(`  ${st(c.bold, "QUERY")}  ${st(c.dim, query)}`);
+  lines.push(`  ${st(c.bold, "COUNT")}  ${entries.length} results`);
+  if (entries.length > 0) {
+    lines.push("");
+    const header = [st(c.bold + c.dim, "TIME"), st(c.bold + c.dim, "STREAM"), st(c.bold + c.dim, "MESSAGE")];
+    const rows = entries.map((e) => [st(c.dim, e._time), e._stream, e._msg]);
+    lines.push(...alignColumns([header, ...rows]));
+  }
+  return lines.join(`
+`);
+}
 async function runLogs(ctx) {
   const query = ctx.args[0];
   if (!query) {
@@ -479,7 +842,11 @@ async function runLogs(ctx) {
   }
   try {
     const entries = await queryLogs(query, limit);
-    ctx.output.print(formatQueryResult(query, entries));
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatLogsHuman(query, entries));
+    } else {
+      ctx.output.print(formatQueryResult(query, entries));
+    }
   } catch (err) {
     if (err instanceof QueryError) {
       ctx.output.error(err.message);
@@ -495,6 +862,26 @@ async function runLogs(ctx) {
 }
 
 // src/commands/metrics.ts
+function formatMetricLabel(metric) {
+  const pairs = Object.entries(metric).filter(([k]) => k !== "__name__").map(([k, v]) => `${k}=${st(c.cyan, `"${v}"`)}`);
+  const name = metric.__name__ ?? "";
+  if (pairs.length === 0)
+    return name || "{}";
+  return `${name}{${pairs.join(",")}}`;
+}
+function formatMetricsHuman(query, samples) {
+  const lines = [];
+  lines.push(`  ${st(c.bold, "QUERY")}  ${st(c.dim, query)}`);
+  lines.push(`  ${st(c.bold, "COUNT")}  ${samples.length} results`);
+  if (samples.length > 0) {
+    lines.push("");
+    const header = [st(c.bold + c.dim, "METRIC"), st(c.bold + c.dim, "VALUE")];
+    const rows = samples.map((s) => [formatMetricLabel(s.metric), s.value[1]]);
+    lines.push(...alignColumns([header, ...rows]));
+  }
+  return lines.join(`
+`);
+}
 async function runMetrics(ctx) {
   const query = ctx.args[0];
   if (!query) {
@@ -510,7 +897,11 @@ async function runMetrics(ctx) {
   try {
     const result = await queryMetrics(query);
     const limited = { ...result, result: result.result.slice(0, limit) };
-    ctx.output.print(formatQueryResult(query, limited.result));
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatMetricsHuman(query, limited.result));
+    } else {
+      ctx.output.print(formatQueryResult(query, limited.result));
+    }
   } catch (err) {
     if (err instanceof QueryError) {
       ctx.output.error(err.message);
@@ -543,10 +934,54 @@ async function runStatus(ctx) {
     }
     return { name, status: "unreachable", port };
   });
-  ctx.output.print({ services });
+  if (ctx.output.isHuman) {
+    const statusCell = (s) => {
+      if (s === "healthy")
+        return `${st(c.green, icon.ok)} ${s}`;
+      if (s === "degraded")
+        return `${st(c.yellow, icon.warn)} ${s}`;
+      return `${st(c.red, icon.fail)} ${s}`;
+    };
+    const header = [st(c.bold + c.dim, "SERVICE"), st(c.bold + c.dim, "PORT"), st(c.bold + c.dim, "STATUS")];
+    const rows = services.map((svc) => [svc.name, st(c.dim, `:${svc.port}`), statusCell(svc.status)]);
+    ctx.output.printHuman(alignColumns([header, ...rows]).join(`
+`));
+  } else {
+    ctx.output.print({ services });
+  }
 }
 
 // src/commands/traces.ts
+function formatDuration(us) {
+  if (us < 1000)
+    return `${us}\xB5s`;
+  if (us < 1e6)
+    return `${(us / 1000).toFixed(1)}ms`;
+  return `${(us / 1e6).toFixed(2)}s`;
+}
+function formatTracesHuman(query, entries) {
+  const lines = [];
+  lines.push(`  ${st(c.bold, "QUERY")}  ${st(c.dim, query)}`);
+  lines.push(`  ${st(c.bold, "COUNT")}  ${entries.length} results`);
+  if (entries.length > 0) {
+    lines.push("");
+    const header = [
+      st(c.bold + c.dim, "TIME"),
+      st(c.bold + c.dim, "TRACE"),
+      st(c.bold + c.dim, "OPERATION"),
+      st(c.bold + c.dim, "DURATION")
+    ];
+    const rows = entries.map((e) => [
+      st(c.dim, e._time),
+      st(c.cyan, e.traceID.slice(0, 8)),
+      e.operationName,
+      formatDuration(e.duration)
+    ]);
+    lines.push(...alignColumns([header, ...rows]));
+  }
+  return lines.join(`
+`);
+}
 async function runTraces(ctx) {
   const query = ctx.args[0];
   if (!query) {
@@ -561,7 +996,11 @@ async function runTraces(ctx) {
   }
   try {
     const entries = await queryTraces(query, limit);
-    ctx.output.print(formatQueryResult(query, entries));
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(formatTracesHuman(query, entries));
+    } else {
+      ctx.output.print(formatQueryResult(query, entries));
+    }
   } catch (err) {
     if (err instanceof QueryError) {
       ctx.output.error(err.message);
@@ -831,7 +1270,11 @@ async function generateOtelConfig() {
 async function runUp(ctx) {
   const running = await isStackRunning();
   if (running) {
-    ctx.output.print({ status: "already_running", message: "stack is already running" });
+    if (ctx.output.isHuman) {
+      ctx.output.printHuman(`  ${st(c.yellow, icon.dot)} stack is already running`);
+    } else {
+      ctx.output.print({ status: "already_running", message: "stack is already running" });
+    }
     return;
   }
   try {
@@ -854,13 +1297,19 @@ async function runUp(ctx) {
     ctx.output.error("stack health check timeout", err instanceof Error ? err.message : String(err));
     exitWith(EXIT.STACK_ERROR);
   }
-  ctx.output.print({ status: "running", message: "stack is ready" });
+  if (ctx.output.isHuman) {
+    ctx.output.printHuman(`  ${st(c.green, icon.dot)} stack is ready`);
+  } else {
+    ctx.output.print({ status: "running", message: "stack is ready" });
+  }
 }
 
 // src/lib/output.ts
 function buildOutputHelper(flags) {
   const isJson = flags.json || !process.stdout.isTTY;
+  const isHuman = !flags.json && !flags.quiet && (process.stdout.isTTY ?? false);
   return {
+    isHuman,
     print(data) {
       if (isJson) {
         process.stdout.write(`${JSON.stringify(data)}
@@ -881,10 +1330,10 @@ function buildOutputHelper(flags) {
         process.stderr.write(`${JSON.stringify({ error: message, detail })}
 `);
       } else {
-        process.stderr.write(`error: ${message}
+        process.stderr.write(`  ${st(c.bold + c.red, "error")}  ${message}
 `);
         if (detail && flags.verbose) {
-          process.stderr.write(`${String(detail)}
+          process.stderr.write(`${st(c.dim, `         ${String(detail)}`)}
 `);
         }
       }
@@ -902,35 +1351,38 @@ function buildContext(rawArgs) {
 }
 
 // src/lib/help.ts
-var HELP_TEXT = `vx \u2014 ephemeral observability for coding agents
+var h = (label) => st(c.bold, label);
+var cmd = (name, desc) => `    ${st(c.cyan, name.padEnd(16))}${desc}`;
+var flag = (name, desc) => `    ${st(c.dim, name.padEnd(16))}${desc}`;
+var HELP_TEXT = `  ${st(c.bold + c.cyan, "vx")} ${st(c.dim, "\u2014")} ephemeral observability for coding agents
 
-USAGE
-  vx <command> [flags] [args]
+  ${h("USAGE")}
+    vx <command> [flags] [args]
 
-COMMANDS
-  up              Start the Victoria observability stack
-  down            Destroy the stack and all data
-  status          Health check of all services
-  init            Install vx skills and configure CLAUDE.md
-  metrics <query> Query Victoria Metrics (MetricsQL)
-  logs <query>    Query Victoria Logs (LogsQL)
-  traces <query>  Query Victoria Traces
-  check <gate>    Evaluate a quality gate \u2192 exit 0/1
+  ${h("COMMANDS")}
+${cmd("up", "Start the Victoria observability stack")}
+${cmd("down", "Destroy the stack and all data")}
+${cmd("status", "Health check of all services")}
+${cmd("init", "Install vx skills and configure CLAUDE.md")}
+${cmd("metrics <query>", "Query Victoria Metrics (MetricsQL)")}
+${cmd("logs <query>", "Query Victoria Logs (LogsQL)")}
+${cmd("traces <query>", "Query Victoria Traces")}
+${cmd("check <gate>", "Evaluate a quality gate \u2192 exit 0/1")}
 
-GLOBAL FLAGS
-  --json          Force JSON output (default when not TTY)
-  --quiet         Suppress informational output
-  --verbose       Show additional diagnostic detail
-  --help, -h      Show help
-  --version, -v   Show version
+  ${h("GLOBAL FLAGS")}
+${flag("--json", "Force JSON output (default when not TTY)")}
+${flag("--quiet", "Suppress informational output")}
+${flag("--verbose", "Show additional diagnostic detail")}
+${flag("--help, -h", "Show help")}
+${flag("--version, -v", "Show version")}
 
-EXAMPLES
-  vx up
-  vx init
-  vx metrics 'rate(http_requests_total[5m])'
-  vx logs '{app="api"} error _time:5m'
-  vx check latency 'http_request_duration_seconds' --p99 --max=2s
-  vx down`;
+  ${h("EXAMPLES")}
+    ${st(c.dim, "$")} vx up
+    ${st(c.dim, "$")} vx init
+    ${st(c.dim, "$")} vx metrics 'rate(http_requests_total[5m])'
+    ${st(c.dim, "$")} vx logs '{app="api"} error _time:5m'
+    ${st(c.dim, "$")} vx check latency 'http_request_duration_seconds' --p99 --max=2s
+    ${st(c.dim, "$")} vx down`;
 // package.json
 var package_default = {
   name: "@appranks/vx",
@@ -1009,7 +1461,7 @@ async function main() {
   const rawArgs = process.argv.slice(2);
   const flags = parseGlobalFlags(rawArgs);
   if (flags.version) {
-    process.stdout.write(`vx ${VERSION}
+    process.stdout.write(`  ${st(c.bold + c.cyan, "vx")} ${st(c.dim, VERSION)}
 `);
     process.exit(EXIT.OK);
   }
@@ -1029,7 +1481,7 @@ async function main() {
   await handler(ctx);
 }
 main().catch((err) => {
-  process.stderr.write(`fatal: ${err instanceof Error ? err.message : String(err)}
+  process.stderr.write(`  ${st(c.bold + c.red, "fatal")}  ${err instanceof Error ? err.message : String(err)}
 `);
   process.exit(EXIT.STACK_ERROR);
 });
