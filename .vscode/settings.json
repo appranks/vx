@@ -1,8 +1,8 @@
 {
   "editor.tabSize": 2,
-  "editor.insertSpaces": true,
+  "editor.insertSpaces": false,
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "biomejs.biome",
 
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
@@ -10,7 +10,8 @@
   "files.exclude": {
     "**/node_modules": true,
     "**/.husky": true,
-    "**/.turbo": true
+    "**/.turbo": true,
+    "**/bun.lock": true
   },
   "search.exclude": {
     "**/node_modules": true,
