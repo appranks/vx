@@ -5,14 +5,14 @@ Ephemeral observability for coding agents. Spins up a lightweight Victoria Metri
 ## Install
 
 ```bash
-pnpm add -D @appranks/vx
+pnpm add -D github:appranks/vx
 ```
 
 ## Quick start
 
 ```bash
 # Install and integrate (one-time setup)
-pnpm add -D @appranks/vx
+pnpm add -D github:appranks/vx
 vx init          # generates instrumentation.ts, .env.otel, CLAUDE.md block
 pnpm install     # install OTel dependencies
 
