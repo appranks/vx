@@ -16,6 +16,16 @@ function runCli(args: string[]): { stdout: string; stderr: string; exitCode: num
 	};
 }
 
+const stackRunning = (() => {
+	const { stdout } = runCli(["status"]);
+	try {
+		const output = JSON.parse(stdout);
+		return output.services?.some((svc: { status: string }) => svc.status === "healthy");
+	} catch {
+		return false;
+	}
+})();
+
 describe("CLI e2e", () => {
 	it("prints version with --version", () => {
 		const { stdout, exitCode } = runCli(["--version"]);
@@ -61,13 +71,13 @@ describe("CLI e2e", () => {
 		expect(exitCode).toBe(1);
 	});
 
-	it("exits 2 when metrics called with query but stack not running", () => {
+	it.skipIf(stackRunning)("exits 2 when metrics called with query but stack not running", () => {
 		const { stderr, exitCode } = runCli(["metrics", "up"]);
 		expect(stderr).toContain("unreachable");
 		expect(exitCode).toBe(2);
 	});
 
-	it("status reports unreachable services when stack not running", () => {
+	it.skipIf(stackRunning)("status reports unreachable services when stack not running", () => {
 		const { stdout, exitCode } = runCli(["status"]);
 		const output = JSON.parse(stdout);
 		expect(output.services).toHaveLength(4);
@@ -77,7 +87,7 @@ describe("CLI e2e", () => {
 		expect(exitCode).toBe(0);
 	});
 
-	it("check health exits 1 when stack not running", () => {
+	it.skipIf(stackRunning)("check health exits 1 when stack not running", () => {
 		const { exitCode } = runCli(["check", "health"]);
 		expect(exitCode).toBe(1);
 	});

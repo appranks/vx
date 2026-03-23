@@ -24,7 +24,7 @@ export function buildOtelConfig(): OtelConfig {
 		},
 		exporters: {
 			"otlphttp/metrics": {
-				endpoint: "http://victoria-metrics:8428",
+				metrics_endpoint: "http://victoria-metrics:8428/opentelemetry/api/v1/push",
 				tls: { insecure: true },
 			},
 			"otlphttp/logs": {

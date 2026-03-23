@@ -4,7 +4,7 @@ import { parseFlag } from "../lib/args.ts";
 import type { CommandContext } from "../lib/context.ts";
 import { appendClaudeMd, writeIfNotExists } from "../lib/preset-writer.ts";
 import { c, icon, st } from "../lib/style.ts";
-import { CLAUDE_MD_BLOCK, VX_SETUP_SKILL, VX_VERIFY_SKILL } from "../skills/content.ts";
+import { CLAUDE_MD_BLOCK, VX_REFERENCES, VX_SKILL } from "../skills/content.ts";
 
 interface FileResult {
 	path: string;
@@ -39,27 +39,32 @@ export async function runInit(ctx: CommandContext): Promise<void> {
 	const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
 	const cwd = process.cwd();
 
-	const setupDir = join(cwd, ".claude", "skills", "vx-setup");
-	const verifyDir = join(cwd, ".claude", "skills", "vx-verify");
-	await mkdir(setupDir, { recursive: true });
-	await mkdir(verifyDir, { recursive: true });
+	// Create skill directory with references
+	const vxDir = join(cwd, ".claude", "skills", "vx");
+	const refsDir = join(vxDir, "references");
+	await mkdir(refsDir, { recursive: true });
 
-	const setupResult = await writeIfNotExists(join(setupDir, "SKILL.md"), VX_SETUP_SKILL, force);
-	const verifyResult = await writeIfNotExists(join(verifyDir, "SKILL.md"), VX_VERIFY_SKILL, force);
+	// Write SKILL.md
+	const skillResult = await writeIfNotExists(join(vxDir, "SKILL.md"), VX_SKILL, force);
 
+	// Write each reference file
+	const refResults: FileResult[] = [];
+	for (const [filename, content] of Object.entries(VX_REFERENCES)) {
+		const result = await writeIfNotExists(join(refsDir, filename), content, force);
+		refResults.push({ path: `.claude/skills/vx/references/${filename}`, action: result });
+	}
+
+	// Append to CLAUDE.md
 	const claudeMdPath = join(cwd, "CLAUDE.md");
 	const claudeMdResult = await appendClaudeMd(claudeMdPath, CLAUDE_MD_BLOCK, force);
 
 	const files: FileResult[] = [
-		{ path: ".claude/skills/vx-setup/SKILL.md", action: setupResult },
-		{ path: ".claude/skills/vx-verify/SKILL.md", action: verifyResult },
+		{ path: ".claude/skills/vx/SKILL.md", action: skillResult },
+		...refResults,
 		{ path: "CLAUDE.md", action: claudeMdResult },
 	];
-	const skills = ["vx-setup", "vx-verify"];
-	const nextSteps = [
-		"Run /vx-setup to configure OpenTelemetry for this project",
-		"Run /vx-verify after setup to confirm telemetry is flowing",
-	];
+	const skills = ["vx"];
+	const nextSteps = ["Run /vx to configure OpenTelemetry and verify telemetry flows"];
 
 	if (ctx.output.isHuman) {
 		ctx.output.printHuman(formatInitHuman(files, skills, nextSteps));

@@ -39,6 +39,16 @@ describe("buildOtelConfig", () => {
 		expect(config.service.pipelines.metrics.exporters).toContain("otlphttp/metrics");
 	});
 
+	it("metrics exporter uses metrics_endpoint with Victoria Metrics OTLP push path", () => {
+		const config = buildOtelConfig();
+		const metricsExporter = config.exporters["otlphttp/metrics"] as Record<string, unknown>;
+		expect(metricsExporter).not.toHaveProperty("endpoint");
+		expect(metricsExporter).toHaveProperty(
+			"metrics_endpoint",
+			"http://victoria-metrics:8428/opentelemetry/api/v1/push",
+		);
+	});
+
 	it("has health_check extension", () => {
 		const config = buildOtelConfig();
 		expect(config.extensions).toHaveProperty("health_check");
