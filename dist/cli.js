@@ -2177,7 +2177,7 @@ ${flag("--version, -v", "Show version")}
 // package.json
 var package_default = {
   name: "@appranks/vx",
-  version: "0.0.10",
+  version: "0.0.11",
   description: "Ephemeral observability for coding agents",
   type: "module",
   license: "MIT",
