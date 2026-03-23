@@ -1,0 +1,2 @@
+{"traceID":"abc123","spanID":"span1","operationName":"GET /api/health","duration":42,"_time":"2026-03-23T12:34:56Z"}
+{"traceID":"abc123","spanID":"span2","operationName":"db.query","duration":35,"_time":"2026-03-23T12:34:56Z"}

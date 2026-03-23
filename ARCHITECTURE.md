@@ -141,7 +141,7 @@ vx down     →  stack destroyed, volumes removed, zero residue
 | Queries | `fetch()` direct to Victoria HTTP APIs | Zero dependencies, JSON response, deterministic |
 | Stack | Docker Compose | Universal, available on any dev machine |
 | Instrumentation | OpenTelemetry SDK | Vendor-neutral standard, all three Victoria products accept OTLP |
-| Distribution | npm (`@lemn/vx`) | One `pnpm add -D` to adopt |
+| Distribution | npm (`@appranks/vx`) | One `pnpm add -D` to adopt |
 | Retention | 1 day, hardcoded | Only the current session matters |
 | Persistence | None | Ephemeral by design |
 

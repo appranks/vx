@@ -1,0 +1,124 @@
+{
+  "project": "@appranks/vx",
+  "version": "0.0.1",
+  "generated": "2026-03-23",
+  "runtime": {
+    "bun": {
+      "version": "1.3.11",
+      "role": "Runtime, bundler, single binary compiler",
+      "apis": ["Bun.spawn", "Bun.spawnSync", "fetch", "Bun.file", "Bun.write"],
+      "compile": "bun build --compile --minify --bytecode"
+    }
+  },
+  "tooling": {
+    "typescript": {
+      "version": "5.9.3",
+      "role": "Type-checking only (Bun transpiles natively)",
+      "config": "tsconfig.json"
+    },
+    "types_bun": {
+      "package": "@types/bun",
+      "version": "1.3.11"
+    },
+    "biome": {
+      "package": "@biomejs/biome",
+      "version": "2.4.8",
+      "role": "Linter + formatter (replaces ESLint + Prettier)",
+      "config": "biome.json"
+    },
+    "vitest": {
+      "version": "4.1.0",
+      "role": "Testing framework",
+      "config": "vitest.config.ts",
+      "caveat": "Run with 'bun run test', never 'bun test'"
+    }
+  },
+  "victoria_stack": {
+    "victoria_metrics": {
+      "image": "victoriametrics/victoria-metrics",
+      "tag": "v1.138.0",
+      "port": 8428,
+      "signal": "metrics",
+      "query_language": "MetricsQL (PromQL superset)",
+      "otlp_endpoint": "/opentelemetry/v1/metrics",
+      "query_endpoint": "/api/v1/query",
+      "flags_dev": [
+        "-retentionPeriod=1d",
+        "-memory.allowedPercent=30",
+        "-storageDataPath=/victoria-metrics-data"
+      ]
+    },
+    "victoria_logs": {
+      "image": "victoriametrics/victoria-logs",
+      "tag": "v1.48.0",
+      "port": 9428,
+      "signal": "logs",
+      "query_language": "LogsQL",
+      "otlp_endpoint": "/insert/opentelemetry/v1/logs",
+      "query_endpoint": "/select/logsql/query",
+      "flags_dev": [
+        "-retentionPeriod=1d",
+        "-memory.allowedPercent=30",
+        "-storageDataPath=/victoria-logs-data"
+      ]
+    },
+    "victoria_traces": {
+      "image": "victoriametrics/victoria-traces",
+      "tag": "v0.8.0",
+      "port": 10428,
+      "signal": "traces",
+      "query_language": "LogsQL + Jaeger API",
+      "otlp_endpoint": "/insert/opentelemetry/v1/traces",
+      "query_endpoint": "/select/logsql/query",
+      "stability": "WIP — APIs may change without backward compatibility",
+      "flags_dev": [
+        "-retentionPeriod=1d",
+        "-memory.allowedPercent=30",
+        "-storageDataPath=/victoria-traces-data"
+      ]
+    },
+    "otel_collector": {
+      "image": "otel/opentelemetry-collector-contrib",
+      "tag": "0.148.0",
+      "port_http": 4318,
+      "port_grpc": 4317,
+      "role": "Receives OTLP from apps, routes to Victoria backends",
+      "note": "Must use contrib, not core (core lacks otlphttp exporter)"
+    }
+  },
+  "otel_sdk": {
+    "note": "These are for presets (instrumentation of user apps), not for vx CLI itself",
+    "packages": {
+      "@opentelemetry/api": "1.9.0",
+      "@opentelemetry/sdk-node": "0.213.0",
+      "@opentelemetry/auto-instrumentations-node": "0.71.0",
+      "@opentelemetry/exporter-trace-otlp-http": "0.213.0",
+      "@opentelemetry/exporter-metrics-otlp-http": "0.213.0",
+      "@opentelemetry/exporter-logs-otlp-http": "0.213.0"
+    },
+    "framework_integrations": {
+      "@hono/otel": {
+        "version": "1.1.1",
+        "runtime": "Bun or Node",
+        "note": "Middleware-level, works without monkey-patching"
+      },
+      "@vercel/otel": {
+        "version": "2.1.1",
+        "runtime": "Node only",
+        "note": "Wrapper for Next.js auto-instrumentation"
+      }
+    },
+    "bun_compatibility": {
+      "auto_instrumentation": false,
+      "manual_instrumentation": true,
+      "reason": "Bun lacks diagnostics_channel support needed for auto-instrumentation"
+    }
+  },
+  "ports": {
+    "4317": "OTel Collector gRPC receiver",
+    "4318": "OTel Collector HTTP receiver (apps send here)",
+    "8428": "Victoria Metrics (metrics queries)",
+    "9428": "Victoria Logs (logs queries)",
+    "10428": "Victoria Traces (traces queries)"
+  }
+}

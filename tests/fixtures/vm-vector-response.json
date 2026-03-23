@@ -1,0 +1,16 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "vector",
+		"result": [
+			{
+				"metric": { "__name__": "up", "job": "vx-stack", "instance": "victoria-metrics:8428" },
+				"value": [1711234567.123, "1"]
+			},
+			{
+				"metric": { "__name__": "up", "job": "vx-stack", "instance": "victoria-logs:9428" },
+				"value": [1711234567.123, "1"]
+			}
+		]
+	}
+}
