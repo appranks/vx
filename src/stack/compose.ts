@@ -36,7 +36,7 @@ function buildVictoriaMetrics(): ServiceDef {
 		volumes: ["vx-vm-data:/victoria-metrics-data"],
 		networks: [VX_NETWORK],
 		healthcheck: {
-			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8428/health"],
+			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8428/health"],
 			interval: "5s",
 			timeout: "3s",
 			retries: 10,
@@ -54,7 +54,7 @@ function buildVictoriaLogs(): ServiceDef {
 		volumes: ["vx-vl-data:/victoria-logs-data"],
 		networks: [VX_NETWORK],
 		healthcheck: {
-			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9428/health"],
+			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9428/health"],
 			interval: "5s",
 			timeout: "3s",
 			retries: 10,
@@ -72,7 +72,7 @@ function buildVictoriaTraces(): ServiceDef {
 		volumes: ["vx-vt-data:/victoria-traces-data"],
 		networks: [VX_NETWORK],
 		healthcheck: {
-			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:10428/health"],
+			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:10428/health"],
 			interval: "5s",
 			timeout: "3s",
 			retries: 10,
@@ -89,7 +89,7 @@ function buildOtelCollector(): ServiceDef {
 		volumes: ["./otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro"],
 		networks: [VX_NETWORK],
 		healthcheck: {
-			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:13133/"],
+			test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:13133/"],
 			interval: "5s",
 			timeout: "3s",
 			retries: 10,
