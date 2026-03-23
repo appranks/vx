@@ -1212,7 +1212,7 @@ var package_default = {
     url: "https://github.com/appranks/vx.git"
   },
   bin: {
-    vx: "./dist/cli.js"
+    vx: "./bin/vx"
   },
   scripts: {
     dev: "bun run src/cli.ts",
