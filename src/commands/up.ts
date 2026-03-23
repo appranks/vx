@@ -4,13 +4,18 @@ import { EXIT, exitWith } from "../lib/exit.ts";
 import { isStackRunning, waitForStack } from "../lib/health.ts";
 import { ensureVxDir, getComposePath } from "../lib/paths.ts";
 import { checkPortsAvailable } from "../lib/ports.ts";
+import { c, icon, st } from "../lib/style.ts";
 import { generateComposeFile } from "../stack/compose.ts";
 import { generateOtelConfig } from "../stack/otel.ts";
 
 export async function runUp(ctx: CommandContext): Promise<void> {
 	const running = await isStackRunning();
 	if (running) {
-		ctx.output.print({ status: "already_running", message: "stack is already running" });
+		if (ctx.output.isHuman) {
+			ctx.output.printHuman(`  ${st(c.yellow, icon.dot)} stack is already running`);
+		} else {
+			ctx.output.print({ status: "already_running", message: "stack is already running" });
+		}
 		return;
 	}
 
@@ -38,5 +43,9 @@ export async function runUp(ctx: CommandContext): Promise<void> {
 		exitWith(EXIT.STACK_ERROR);
 	}
 
-	ctx.output.print({ status: "running", message: "stack is ready" });
+	if (ctx.output.isHuman) {
+		ctx.output.printHuman(`  ${st(c.green, icon.dot)} stack is ready`);
+	} else {
+		ctx.output.print({ status: "running", message: "stack is ready" });
+	}
 }

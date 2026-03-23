@@ -23,6 +23,7 @@ export function buildMockContext(
 		args,
 		flags,
 		output: {
+			isHuman: false,
 			print: vi.fn((data: unknown) => printed.push(data)),
 			printHuman: vi.fn(),
 			error: vi.fn((msg: string) => errors.push(msg)),

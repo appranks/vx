@@ -1,5 +1,7 @@
 import { HEALTH_ENDPOINTS, TIMEOUTS } from "../lib/constants.ts";
 import type { CommandContext } from "../lib/context.ts";
+import { c, icon, st } from "../lib/style.ts";
+import { alignColumns } from "../lib/table.ts";
 
 export async function runStatus(ctx: CommandContext): Promise<void> {
 	const checks = await Promise.allSettled(
@@ -22,5 +24,17 @@ export async function runStatus(ctx: CommandContext): Promise<void> {
 		return { name, status: "unreachable", port };
 	});
 
-	ctx.output.print({ services });
+	if (ctx.output.isHuman) {
+		const statusCell = (s: string) => {
+			if (s === "healthy") return `${st(c.green, icon.ok)} ${s}`;
+			if (s === "degraded") return `${st(c.yellow, icon.warn)} ${s}`;
+			return `${st(c.red, icon.fail)} ${s}`;
+		};
+
+		const header = [st(c.bold + c.dim, "SERVICE"), st(c.bold + c.dim, "PORT"), st(c.bold + c.dim, "STATUS")];
+		const rows = services.map((svc) => [svc.name, st(c.dim, `:${svc.port}`), statusCell(svc.status)]);
+		ctx.output.printHuman(alignColumns([header, ...rows]).join("\n"));
+	} else {
+		ctx.output.print({ services });
+	}
 }

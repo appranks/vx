@@ -3,6 +3,7 @@ import type { CommandContext } from "../lib/context.ts";
 import { EXIT, exitWith } from "../lib/exit.ts";
 import { isStackRunning } from "../lib/health.ts";
 import { QueryError, queryLogs, queryMetrics, StackUnreachableError } from "../lib/http.ts";
+import { c, icon, st } from "../lib/style.ts";
 
 export async function runCheck(ctx: CommandContext): Promise<void> {
 	const gate = ctx.args[0];
@@ -24,10 +25,20 @@ export async function runCheck(ctx: CommandContext): Promise<void> {
 	}
 }
 
+function formatGate(passed: boolean, gate: string, detail: string): string {
+	const sym = passed ? st(c.green, icon.ok) : st(c.red, icon.fail);
+	const status = passed ? "passed" : st(c.red, "failed");
+	return `  ${sym} ${st(c.bold, gate)} ${st(c.dim, "\u2014")} ${status}  ${st(c.dim, detail)}`;
+}
+
 async function checkHealth(ctx: CommandContext): Promise<void> {
 	const healthy = await isStackRunning();
 	if (healthy) {
-		ctx.output.print({ gate: "health", status: "passed", message: "all services healthy" });
+		if (ctx.output.isHuman) {
+			ctx.output.printHuman(formatGate(true, "health", "all services healthy"));
+		} else {
+			ctx.output.print({ gate: "health", status: "passed", message: "all services healthy" });
+		}
 	} else {
 		ctx.output.error("health check failed", "one or more services are not responding");
 		exitWith(EXIT.USER_ERROR);
@@ -60,17 +71,28 @@ async function checkLatency(ctx: CommandContext): Promise<void> {
 	try {
 		const result = await queryMetrics(wrappedQuery);
 		if (result.result.length === 0) {
-			ctx.output.print({ gate: "latency", status: "passed", message: "no data", value: null, max: maxStr });
+			if (ctx.output.isHuman) {
+				ctx.output.printHuman(formatGate(true, "latency", `no data (max ${maxStr})`));
+			} else {
+				ctx.output.print({ gate: "latency", status: "passed", message: "no data", value: null, max: maxStr });
+			}
 			return;
 		}
 
 		const value = Number.parseFloat(result.result[0].value[1]);
-		if (value <= maxSeconds) {
-			ctx.output.print({ gate: "latency", status: "passed", value, max: maxSeconds, query: wrappedQuery });
+		const passed = value <= maxSeconds;
+		if (ctx.output.isHuman) {
+			ctx.output.printHuman(formatGate(passed, "latency", `${value.toFixed(2)}s (max ${maxSeconds}s)`));
 		} else {
-			ctx.output.print({ gate: "latency", status: "failed", value, max: maxSeconds, query: wrappedQuery });
-			exitWith(EXIT.USER_ERROR);
+			ctx.output.print({
+				gate: "latency",
+				status: passed ? "passed" : "failed",
+				value,
+				max: maxSeconds,
+				query: wrappedQuery,
+			});
 		}
+		if (!passed) exitWith(EXIT.USER_ERROR);
 	} catch (err) {
 		if (err instanceof QueryError) {
 			ctx.output.error(err.message);
@@ -107,13 +129,14 @@ async function checkErrors(ctx: CommandContext): Promise<void> {
 	try {
 		const entries = await queryLogs(query, maxCount + 1);
 		const count = entries.length;
+		const passed = count <= maxCount;
 
-		if (count <= maxCount) {
-			ctx.output.print({ gate: "errors", status: "passed", count, max: maxCount, query });
+		if (ctx.output.isHuman) {
+			ctx.output.printHuman(formatGate(passed, "errors", `${count} found (max ${maxCount})`));
 		} else {
-			ctx.output.print({ gate: "errors", status: "failed", count, max: maxCount, query });
-			exitWith(EXIT.USER_ERROR);
+			ctx.output.print({ gate: "errors", status: passed ? "passed" : "failed", count, max: maxCount, query });
 		}
+		if (!passed) exitWith(EXIT.USER_ERROR);
 	} catch (err) {
 		if (err instanceof QueryError) {
 			ctx.output.error(err.message);

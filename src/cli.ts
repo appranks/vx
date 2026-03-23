@@ -12,6 +12,7 @@ import { buildContext } from "./lib/context.ts";
 import { EXIT } from "./lib/exit.ts";
 import { HELP_TEXT } from "./lib/help.ts";
 import { buildOutputHelper } from "./lib/output.ts";
+import { c, st } from "./lib/style.ts";
 import { VERSION } from "./lib/version.ts";
 
 const COMMANDS: Record<string, CommandHandler> = {
@@ -40,7 +41,7 @@ async function main(): Promise<void> {
 	const flags = parseGlobalFlags(rawArgs);
 
 	if (flags.version) {
-		process.stdout.write(`vx ${VERSION}\n`);
+		process.stdout.write(`  ${st(c.bold + c.cyan, "vx")} ${st(c.dim, VERSION)}\n`);
 		process.exit(EXIT.OK);
 	}
 
@@ -63,6 +64,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-	process.stderr.write(`fatal: ${err instanceof Error ? err.message : String(err)}\n`);
+	process.stderr.write(`  ${st(c.bold + c.red, "fatal")}  ${err instanceof Error ? err.message : String(err)}\n`);
 	process.exit(EXIT.STACK_ERROR);
 });
