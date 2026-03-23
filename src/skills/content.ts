@@ -1,17 +1,25 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import bunRef from "./vx/references/bun.md" with { type: "text" };
+import diagnosticsRef from "./vx/references/diagnostics.md" with { type: "text" };
+import envVarsRef from "./vx/references/env-vars.md" with { type: "text" };
+import logBridgesRef from "./vx/references/log-bridges.md" with { type: "text" };
+import manualSpansRef from "./vx/references/manual-spans.md" with { type: "text" };
+import nextjsRef from "./vx/references/nextjs.md" with { type: "text" };
+import nodeRef from "./vx/references/node.md" with { type: "text" };
+import signalsRef from "./vx/references/signals.md" with { type: "text" };
+import skillMd from "./vx/SKILL.md" with { type: "text" };
 
-const skillDir = join(import.meta.dir, "vx");
-const refsDir = join(skillDir, "references");
+export const VX_SKILL = skillMd;
 
-export const VX_SKILL = readFileSync(join(skillDir, "SKILL.md"), "utf-8");
-
-export const VX_REFERENCES: Record<string, string> = Object.fromEntries(
-	readdirSync(refsDir)
-		.filter((f) => f.endsWith(".md"))
-		.sort()
-		.map((f) => [f, readFileSync(join(refsDir, f), "utf-8")]),
-);
+export const VX_REFERENCES: Record<string, string> = {
+	"bun.md": bunRef,
+	"diagnostics.md": diagnosticsRef,
+	"env-vars.md": envVarsRef,
+	"log-bridges.md": logBridgesRef,
+	"manual-spans.md": manualSpansRef,
+	"nextjs.md": nextjsRef,
+	"node.md": nodeRef,
+	"signals.md": signalsRef,
+};
 
 export const CLAUDE_MD_BLOCK = `## vx
 
