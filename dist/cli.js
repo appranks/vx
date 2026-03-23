@@ -1438,7 +1438,7 @@ var package_default = {
     "lint:fix": "biome check --write .",
     test: "vitest run",
     "test:watch": "vitest",
-    validate: "bun run scripts/validate.ts",
+    validate: "bash scripts/validate.sh",
     "publish:gpr": "npm publish",
     prepare: "husky"
   },
