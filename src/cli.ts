@@ -3,7 +3,6 @@ import { runDown } from "./commands/down.ts";
 import { runInit } from "./commands/init.ts";
 import { runLogs } from "./commands/logs.ts";
 import { runMetrics } from "./commands/metrics.ts";
-import { runSnippet } from "./commands/snippet.ts";
 import { runStatus } from "./commands/status.ts";
 import { runTraces } from "./commands/traces.ts";
 import { runUp } from "./commands/up.ts";
@@ -24,7 +23,6 @@ const COMMANDS: Record<string, CommandHandler> = {
 	traces: runTraces,
 	check: runCheck,
 	init: runInit,
-	snippet: runSnippet,
 };
 
 process.on("SIGINT", () => {

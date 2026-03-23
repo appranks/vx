@@ -338,7 +338,8 @@ async function runDown(ctx) {
 }
 
 // src/commands/init.ts
-import { join as join7 } from "path";
+import { mkdir as mkdir2 } from "fs/promises";
+import { join as join3 } from "path";
 
 // src/lib/preset-writer.ts
 async function writeIfNotExists(path, content, force) {
@@ -381,287 +382,37 @@ ${block}
   return "appended";
 }
 
-// src/presets/detect.ts
+// src/skills/content.ts
+import { readFileSync } from "fs";
 import { join as join2 } from "path";
-async function detectPreset() {
-  const pkgPath = join2(process.cwd(), "package.json");
-  const file = Bun.file(pkgPath);
-  if (!await file.exists()) {
-    return "generic";
-  }
-  const pkg = await file.json();
-  if (pkg.workspaces) {
-    return "generic";
-  }
-  const allDeps = {
-    ...pkg.dependencies,
-    ...pkg.devDependencies
-  };
-  if ("hono" in allDeps)
-    return "hono";
-  if ("next" in allDeps)
-    return "nextjs";
-  return "generic";
+function readSkill(name) {
+  const path = join2(import.meta.dirname, `${name}.md`);
+  return readFileSync(path, "utf-8");
 }
-
-// src/presets/generic.ts
-import { join as join4 } from "path";
-
-// src/lib/package-json.ts
-import { join as join3 } from "path";
-async function injectDependencies(deps, dev = false) {
-  const pkgPath = join3(process.cwd(), "package.json");
-  const file = Bun.file(pkgPath);
-  const exists = await file.exists();
-  const pkg = exists ? await file.json() : { name: "my-app", version: "1.0.0" };
-  const field = dev ? "devDependencies" : "dependencies";
-  const existing = pkg[field] ?? {};
-  const added = [];
-  const skipped = [];
-  for (const [name, version] of Object.entries(deps)) {
-    if (existing[name]) {
-      skipped.push(`${name}@${existing[name]} (keeping existing)`);
-    } else {
-      existing[name] = version;
-      added.push(`${name}@${version}`);
-    }
-  }
-  pkg[field] = existing;
-  await Bun.write(pkgPath, `${JSON.stringify(pkg, null, 2)}
-`);
-  return { added, skipped };
-}
-
-// src/presets/generic.ts
-var GENERIC_DEPS = {
-  "@opentelemetry/api": "1.9.0",
-  "@opentelemetry/sdk-node": "0.213.0",
-  "@opentelemetry/exporter-trace-otlp-http": "0.213.0",
-  "@opentelemetry/exporter-metrics-otlp-http": "0.213.0",
-  "@opentelemetry/exporter-logs-otlp-http": "0.213.0",
-  "@opentelemetry/sdk-metrics": "2.0.0",
-  "@opentelemetry/sdk-logs": "0.213.0",
-  "@opentelemetry/resources": "2.0.0",
-  "@opentelemetry/semantic-conventions": "1.35.0"
-};
-var INSTRUMENTATION = `import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
-import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
-import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
-import { Resource } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-
-const sdk = new NodeSDK({
-  resource: new Resource({
-    [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME ?? "my-service",
-  }),
-  traceExporter: new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces",
-  }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({
-      url: "http://localhost:4318/v1/metrics",
-    }),
-    exportIntervalMillis: 5_000,
-  }),
-  logRecordProcessors: [
-    new SimpleLogRecordProcessor(
-      new OTLPLogExporter({ url: "http://localhost:4318/v1/logs" })
-    ),
-  ],
-  // No auto-instrumentations included \u2014 add spans manually for your framework
-});
-
-sdk.start();
-
-process.on("beforeExit", () => sdk.shutdown());
-`;
-var ENV_OTEL = `# OpenTelemetry configuration for vx observability stack
-# Copy these values to your .env or .env.local file
-
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-OTEL_SERVICE_NAME=my-service
-# Optional: enable detailed OTel SDK logs
-# OTEL_LOG_LEVEL=debug
-`;
-async function initGeneric(ctx) {
-  const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
-  const cwd = process.cwd();
-  const instrumentationResult = await writeIfNotExists(join4(cwd, "instrumentation.ts"), INSTRUMENTATION, force);
-  const envResult = await writeIfNotExists(join4(cwd, ".env.otel"), ENV_OTEL, force);
-  const depResult = await injectDependencies(GENERIC_DEPS);
-  return {
-    preset: "generic",
-    files: [
-      { path: "instrumentation.ts", action: instrumentationResult },
-      { path: ".env.otel", action: envResult }
-    ],
-    dependencies: depResult,
-    next_steps: [
-      "pnpm install",
-      "Add OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 to your .env",
-      "Import instrumentation.ts as the first import in your entry file",
-      "Add manual spans for your framework routes and operations"
-    ]
-  };
-}
-
-// src/presets/hono.ts
-import { join as join5 } from "path";
-var HONO_DEPS = {
-  "@hono/otel": "1.1.1",
-  "@opentelemetry/api": "1.9.0",
-  "@opentelemetry/sdk-node": "0.213.0",
-  "@opentelemetry/exporter-trace-otlp-http": "0.213.0",
-  "@opentelemetry/exporter-metrics-otlp-http": "0.213.0",
-  "@opentelemetry/exporter-logs-otlp-http": "0.213.0",
-  "@opentelemetry/sdk-metrics": "2.0.0",
-  "@opentelemetry/sdk-logs": "0.213.0",
-  "@opentelemetry/resources": "2.0.0",
-  "@opentelemetry/semantic-conventions": "1.35.0"
-};
-var INSTRUMENTATION2 = `import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
-import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
-import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
-import { Resource } from "@opentelemetry/resources";
-import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-
-const sdk = new NodeSDK({
-  resource: new Resource({
-    [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME ?? "my-service",
-  }),
-  traceExporter: new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces",
-  }),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new OTLPMetricExporter({
-      url: "http://localhost:4318/v1/metrics",
-    }),
-    exportIntervalMillis: 5_000,
-  }),
-  logRecordProcessors: [
-    new SimpleLogRecordProcessor(
-      new OTLPLogExporter({ url: "http://localhost:4318/v1/logs" })
-    ),
-  ],
-  // No auto-instrumentations: Bun lacks diagnostics_channel support
-});
-
-sdk.start();
-
-process.on("beforeExit", () => sdk.shutdown());
-`;
-var ENV_OTEL2 = `# OpenTelemetry configuration for vx observability stack
-# Copy these values to your .env or .env.local file
-
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-OTEL_SERVICE_NAME=my-service
-# Optional: enable detailed OTel SDK logs
-# OTEL_LOG_LEVEL=debug
-`;
-async function initHono(ctx) {
-  const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
-  const cwd = process.cwd();
-  const instrumentationResult = await writeIfNotExists(join5(cwd, "instrumentation.ts"), INSTRUMENTATION2, force);
-  const envResult = await writeIfNotExists(join5(cwd, ".env.otel"), ENV_OTEL2, force);
-  const depResult = await injectDependencies(HONO_DEPS);
-  return {
-    preset: "hono",
-    files: [
-      { path: "instrumentation.ts", action: instrumentationResult },
-      { path: ".env.otel", action: envResult }
-    ],
-    dependencies: depResult,
-    next_steps: [
-      "pnpm install",
-      "Add OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 to your .env",
-      "Import instrumentation.ts as the first import in your entry file",
-      "Wrap your Hono app with instrument() from @hono/otel"
-    ]
-  };
-}
-
-// src/presets/nextjs.ts
-import { join as join6 } from "path";
-var NEXTJS_DEPS = {
-  "@vercel/otel": "2.1.1",
-  "@opentelemetry/api": "1.9.0"
-};
-var INSTRUMENTATION3 = `import { registerOTel } from "@vercel/otel";
-
-export function register() {
-  registerOTel({
-    serviceName: process.env.SERVICE_NAME ?? "my-nextjs-app",
-  });
-}
-`;
-var ENV_OTEL3 = `# OpenTelemetry configuration for vx observability stack
-# Copy these values to your .env.local file
-
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-OTEL_SERVICE_NAME=my-nextjs-app
-# Optional: enable detailed OTel SDK logs
-# OTEL_LOG_LEVEL=debug
-`;
-async function initNextjs(ctx) {
-  const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
-  const cwd = process.cwd();
-  const instrumentationResult = await writeIfNotExists(join6(cwd, "instrumentation.ts"), INSTRUMENTATION3, force);
-  const envResult = await writeIfNotExists(join6(cwd, ".env.otel"), ENV_OTEL3, force);
-  const depResult = await injectDependencies(NEXTJS_DEPS);
-  return {
-    preset: "nextjs",
-    files: [
-      { path: "instrumentation.ts", action: instrumentationResult },
-      { path: ".env.otel", action: envResult }
-    ],
-    dependencies: depResult,
-    next_steps: [
-      "pnpm install",
-      "Add OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 to your .env.local",
-      "Next.js will automatically call register() from instrumentation.ts"
-    ]
-  };
-}
-
-// src/commands/init.ts
-var PRESETS = {
-  hono: initHono,
-  nextjs: initNextjs,
-  generic: initGeneric
-};
+var VX_SETUP_SKILL = readSkill("vx-setup");
+var VX_VERIFY_SKILL = readSkill("vx-verify");
 var CLAUDE_MD_BLOCK = `## vx
 
 This project uses \`vx\` for ephemeral runtime observability during development.
 
-### Setup
+### Commands
 
 \`\`\`bash
-vx up       # Start the observability stack (Docker)
-vx down     # Destroy the stack and all data
-vx status   # Health check all services
+vx up                          # Start the observability stack (Docker)
+vx down                        # Destroy the stack and all data
+vx status                      # Health check all services
+vx metrics '<MetricsQL>'       # Query metrics (PromQL superset)
+vx logs '<LogsQL>'             # Query logs
+vx traces '<query>'            # Query traces
+vx check health                # Verify all services respond
+vx check latency '<metric>' --p99 --max=2s
+vx check errors '<logsql>' --max=0
 \`\`\`
 
-### Querying
+### Skills
 
-\`\`\`bash
-vx metrics '<MetricsQL>'   # Query metrics (PromQL superset)
-vx logs '<LogsQL>'         # Query logs
-vx traces '<query>'        # Query traces
-\`\`\`
-
-### Quality gates
-
-\`\`\`bash
-vx check health                                 # All services respond
-vx check latency '<metric>' --p99 --max=2s       # p99 latency under threshold
-vx check errors '<logsql>' --max=0               # Zero errors in window
-\`\`\`
+- \`/vx-setup\` \u2014 Configure OpenTelemetry instrumentation for this project
+- \`/vx-verify\` \u2014 Verify telemetry is flowing from app to vx stack
 
 ### Endpoints
 
@@ -675,24 +426,37 @@ vx check errors '<logsql>' --max=0               # Zero errors in window
 ### Workflow
 
 1. Run \`vx up\` before starting the app
-2. App emits telemetry to \`http://localhost:4318\` via OpenTelemetry
-3. Query with \`vx metrics\`, \`vx logs\`, \`vx traces\`
-4. Use \`vx check\` as quality gates before completing a task
-5. Run \`vx down\` when done`;
+2. Run \`/vx-setup\` to configure OTel (once per project)
+3. App emits telemetry to \`http://localhost:4318\` via OpenTelemetry
+4. Query with \`vx metrics\`, \`vx logs\`, \`vx traces\`
+5. Use \`vx check\` as quality gates before completing a task
+6. Run \`/vx-verify\` to confirm everything works
+7. Run \`vx down\` when done`;
+
+// src/commands/init.ts
 async function runInit(ctx) {
-  const presetArg = ctx.args[0];
-  const presetName = presetArg ?? await detectPreset();
-  const handler = PRESETS[presetName];
-  if (!handler) {
-    ctx.output.error(`unknown preset: ${presetName}`, `Available presets: ${Object.keys(PRESETS).join(", ")}`);
-    exitWith(EXIT.USER_ERROR);
-  }
   const force = ctx.args.includes("--force") || parseFlag(ctx.args, "--force") !== undefined;
-  const result = await handler(ctx);
-  const claudeMdPath = join7(process.cwd(), "CLAUDE.md");
+  const cwd = process.cwd();
+  const setupDir = join3(cwd, ".claude", "skills", "vx-setup");
+  const verifyDir = join3(cwd, ".claude", "skills", "vx-verify");
+  await mkdir2(setupDir, { recursive: true });
+  await mkdir2(verifyDir, { recursive: true });
+  const setupResult = await writeIfNotExists(join3(setupDir, "SKILL.md"), VX_SETUP_SKILL, force);
+  const verifyResult = await writeIfNotExists(join3(verifyDir, "SKILL.md"), VX_VERIFY_SKILL, force);
+  const claudeMdPath = join3(cwd, "CLAUDE.md");
   const claudeMdResult = await appendClaudeMd(claudeMdPath, CLAUDE_MD_BLOCK, force);
-  result.files.push({ path: "CLAUDE.md", action: claudeMdResult });
-  ctx.output.print(result);
+  ctx.output.print({
+    files: [
+      { path: ".claude/skills/vx-setup/SKILL.md", action: setupResult },
+      { path: ".claude/skills/vx-verify/SKILL.md", action: verifyResult },
+      { path: "CLAUDE.md", action: claudeMdResult }
+    ],
+    skills: ["vx-setup", "vx-verify"],
+    next_steps: [
+      "Run /vx-setup to configure OpenTelemetry for this project",
+      "Run /vx-verify after setup to confirm telemetry is flowing"
+    ]
+  });
 }
 
 // src/lib/format.ts
@@ -759,42 +523,6 @@ async function runMetrics(ctx) {
     ctx.output.error("unexpected error", err instanceof Error ? err.message : String(err));
     exitWith(EXIT.STACK_ERROR);
   }
-}
-
-// src/commands/snippet.ts
-var SNIPPET = `## vx \u2014 Observability for coding agents
-
-This project uses \`vx\` for ephemeral runtime observability. The stack runs as Docker containers.
-
-### Quick reference
-
-\`\`\`bash
-vx up                    # Start observability stack
-vx down                  # Destroy stack and all data
-vx status                # Health check all services
-vx metrics '<MetricsQL>' # Query metrics (PromQL superset)
-vx logs '<LogsQL>'       # Query logs
-vx traces '<query>'      # Query traces
-vx check health          # Verify all services respond
-vx check latency '<metric>' --p99 --max=2s  # Latency gate
-vx check errors '<logsql>' --max=0          # Error gate
-\`\`\`
-
-### Endpoints
-
-| Signal  | Port  | Language   |
-|---------|-------|------------|
-| Metrics | :8428 | MetricsQL  |
-| Logs    | :9428 | LogsQL     |
-| Traces  | :10428| LogsQL     |
-| OTLP    | :4318 | \u2014          |
-
-### Telemetry
-
-App must export telemetry via OpenTelemetry to \`http://localhost:4318\`.
-Run \`vx init\` to generate instrumentation config.`;
-async function runSnippet(ctx) {
-  ctx.output.print({ snippet: SNIPPET });
 }
 
 // src/commands/status.ts
@@ -1183,12 +911,11 @@ COMMANDS
   up              Start the Victoria observability stack
   down            Destroy the stack and all data
   status          Health check of all services
-  init [preset]   Generate docker-compose and OTel config
+  init            Install vx skills and configure CLAUDE.md
   metrics <query> Query Victoria Metrics (MetricsQL)
   logs <query>    Query Victoria Logs (LogsQL)
   traces <query>  Query Victoria Traces
   check <gate>    Evaluate a quality gate \u2192 exit 0/1
-  snippet         Print CLAUDE.md block for agent setup
 
 GLOBAL FLAGS
   --json          Force JSON output (default when not TTY)
@@ -1199,6 +926,7 @@ GLOBAL FLAGS
 
 EXAMPLES
   vx up
+  vx init
   vx metrics 'rate(http_requests_total[5m])'
   vx logs '{app="api"} error _time:5m'
   vx check latency 'http_request_duration_seconds' --p99 --max=2s
@@ -1264,8 +992,7 @@ var COMMANDS = {
   logs: runLogs,
   traces: runTraces,
   check: runCheck,
-  init: runInit,
-  snippet: runSnippet
+  init: runInit
 };
 process.on("SIGINT", () => {
   process.stderr.write(`
