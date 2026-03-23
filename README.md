@@ -83,24 +83,30 @@ npx vx down
 | 9428  | Victoria Logs                          |
 | 10428 | Victoria Traces                        |
 
-## Presets
-
-`vx init` detects your framework from `package.json` and generates the right instrumentation:
-
-- **hono** — `@hono/otel` middleware (works in Bun)
-- **nextjs** — `@vercel/otel` (Next.js instrumentation hook)
-- **generic** — Manual OTel SDK setup
-
-Use `--force` to overwrite existing files. Run again safely — `vx init` is idempotent.
-
 ## What `vx init` generates
 
 | File | Purpose |
 |------|---------|
-| `instrumentation.ts` | OTel SDK setup for detected framework |
-| `.env.otel` | Endpoint configuration as reference |
-| `CLAUDE.md` (block) | `## vx` section with commands and workflow for the agent |
-| `package.json` | OTel dependencies injected |
+| `.claude/skills/vx-setup/SKILL.md` | Skill for the agent to configure OTel |
+| `.claude/skills/vx-verify/SKILL.md` | Skill for the agent to verify telemetry |
+| `CLAUDE.md` (block) | `## vx` section with commands and workflow |
+
+`vx init` does NOT generate instrumentation code or inject dependencies. Instead, it installs skills that the agent (`/vx-setup`) executes intelligently — detecting frameworks, existing OTel config, monorepo structure, and making minimal non-invasive changes.
+
+Use `--force` to overwrite existing skill files. Run again safely — `vx init` is idempotent.
+
+## Supported frameworks
+
+The `/vx-setup` skill handles:
+
+| Framework | Runtime | Template |
+|-----------|---------|----------|
+| NestJS, Express, Fastify | Node | `node-auto` (auto-instrumentations) |
+| Hono | Node | `node-auto` + `@hono/otel` (dual layer) |
+| Hono | Bun | `hono-bun` (manual, no auto-instrumentations) |
+| Next.js | Node | `nextjs` (`@vercel/otel`) |
+
+If OTel already exists and points to `:4318` → zero changes needed.
 
 ## Development
 

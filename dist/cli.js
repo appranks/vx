@@ -463,10 +463,15 @@ Configure the minimum viable OpenTelemetry setup so this project sends telemetry
 2. If monorepo: identify app directories (typically \`apps/*\`).
 3. For each app (or root if single-package):
    - Detect framework from dependencies: \`@nestjs/core\`, \`hono\`, \`next\`, \`express\`, \`fastify\`, \`@temporalio/worker\`
+   - Detect runtime: check if \`bun\` is in devDependencies or if \`bunfig.toml\` exists \u2192 Bun. Otherwise \u2192 Node.
    - Search for existing OTel: grep for \`@opentelemetry\`, \`OTLPTraceExporter\`, \`NodeSDK\`, \`registerOTel\`, \`@hono/otel\` in \`src/\` files
    - Check for \`tracing.ts\`, \`instrumentation.ts\`, or \`telemetry.ts\` files
    - If found: read the file, note the OTLP exporter URL
-   - Check env files (\`.env\`, \`.env.local\`, \`.env.development\`) for \`OTEL_COLLECTOR_URL\` or \`OTEL_EXPORTER_OTLP_ENDPOINT\`
+4. Detect the env file pattern per app:
+   - If \`.env.local\` exists \u2192 use \`.env.local\`
+   - If \`.env.development\` exists \u2192 use \`.env.development\`
+   - If \`.env\` exists with dev-specific vars \u2192 use \`.env\`
+   - If none exist \u2192 create \`.env.local\`
 
 ## Phase 2: Decide per app
 
@@ -476,16 +481,14 @@ Apply the FIRST matching rule:
 |-----------|--------|
 | OTel exists AND exports to \`:4318\` | Report: "Already compatible. No changes needed." |
 | OTel exists AND uses env var defaulting to \`:4318\` | Report: "Already compatible via env default." |
-| OTel exists AND exports to different URL | Add/update env var \`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318\` in \`.env.local\` or equivalent. ONE change. |
-| No OTel AND NestJS or Fastify (Node) | Apply template: **nestjs-node** |
-| No OTel AND Hono (Bun runtime) | Apply template: **hono-bun** |
+| OTel exists AND exports to different URL | Set \`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318\` in the detected env file. ONE change. |
+| No OTel AND Node runtime (NestJS, Express, Fastify, Hono on Node, generic) | Apply template: **node-auto** |
+| No OTel AND Hono on Bun runtime | Apply template: **hono-bun** |
 | No OTel AND Next.js | Apply template: **nextjs** |
-| No OTel AND Express (Node) | Apply template: **nestjs-node** (same pattern) |
-| No OTel AND unknown framework | Apply template: **generic-node** |
 
 ## Phase 3: Apply template (only if no OTel exists)
 
-### Template: nestjs-node
+### Template: node-auto
 
 Create \`src/tracing.ts\`:
 
@@ -516,17 +519,39 @@ sdk.start();
 process.on("SIGTERM", () => sdk.shutdown());
 \`\`\`
 
-Add to entry point: \`import "./tracing";\` as the FIRST import in \`main.ts\` or equivalent.
+#### Framework variations
 
-Dependencies to add:
+| Framework | Default service name | Entry file | Import pattern |
+|-----------|---------------------|------------|----------------|
+| NestJS | \`my-nestjs-api\` | \`src/main.ts\` | \`import "./tracing";\` first line |
+| Hono (Node) | \`my-hono-api\` | \`src/index.ts\` | \`import "./tracing";\` first line |
+| Express | \`my-express-api\` | \`src/app.ts\` | \`import "./tracing";\` first line |
+| Fastify | \`my-fastify-api\` | \`src/server.ts\` | \`import "./tracing";\` first line |
+| Generic | \`my-service\` | Entry file | \`import "./tracing";\` first line |
+
+#### Extra: Hono on Node
+
+If the framework is Hono running on Node (not Bun), ALSO:
+
+1. Install \`@hono/otel@1.1.1\` in the app directory
+2. Wrap the Hono app with \`instrument()\`:
+   \`\`\`typescript
+   import { instrument } from "@hono/otel";
+   export default instrument(app);
+   \`\`\`
+
+This gives both auto-instrumentation (HTTP, DB, etc.) AND middleware-level route tracing.
+
+#### Install dependencies
+
+Run inside the app directory:
+
+\`\`\`bash
+cd <app-dir>
+pnpm add @opentelemetry/api@1.9.0 @opentelemetry/sdk-node@0.213.0 @opentelemetry/auto-instrumentations-node@0.71.0 @opentelemetry/exporter-trace-otlp-http@0.213.0 @opentelemetry/resources@2.0.0 @opentelemetry/semantic-conventions@1.35.0
 \`\`\`
-@opentelemetry/api@1.9.0
-@opentelemetry/sdk-node@0.213.0
-@opentelemetry/auto-instrumentations-node@0.71.0
-@opentelemetry/exporter-trace-otlp-http@0.213.0
-@opentelemetry/resources@2.0.0
-@opentelemetry/semantic-conventions@1.35.0
-\`\`\`
+
+For Hono on Node, also: \`pnpm add @hono/otel@1.1.1\`
 
 ### Template: hono-bun
 
@@ -554,14 +579,11 @@ process.on("beforeExit", () => sdk.shutdown());
 
 Wrap the Hono app: \`export default instrument(app)\` using \`import { instrument } from "@hono/otel"\`.
 
-Dependencies to add:
-\`\`\`
-@hono/otel@1.1.1
-@opentelemetry/api@1.9.0
-@opentelemetry/sdk-node@0.213.0
-@opentelemetry/exporter-trace-otlp-http@0.213.0
-@opentelemetry/resources@2.0.0
-@opentelemetry/semantic-conventions@1.35.0
+Run inside the app directory:
+
+\`\`\`bash
+cd <app-dir>
+bun add @hono/otel@1.1.1 @opentelemetry/api@1.9.0 @opentelemetry/sdk-node@0.213.0 @opentelemetry/exporter-trace-otlp-http@0.213.0 @opentelemetry/resources@2.0.0 @opentelemetry/semantic-conventions@1.35.0
 \`\`\`
 
 IMPORTANT: NEVER add \`@opentelemetry/auto-instrumentations-node\` for Bun projects.
@@ -580,38 +602,40 @@ export function register() {
 }
 \`\`\`
 
-Add to \`.env.local\`:
+Run inside the app directory:
+
+\`\`\`bash
+cd <app-dir>
+pnpm add @vercel/otel@2.1.1 @opentelemetry/api@1.9.0
+\`\`\`
+
+### After applying any template
+
+Set env vars in the detected env file (from Phase 1 step 4):
+
 \`\`\`
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_SERVICE_NAME=<service-name>
 \`\`\`
 
-Dependencies to add:
-\`\`\`
-@vercel/otel@2.1.1
-@opentelemetry/api@1.9.0
-\`\`\`
+## Phase 4: After all changes
 
-### Template: generic-node
-
-Same as **nestjs-node** template.
-
-## Phase 4: After changes
-
-1. Run the project's package manager install command (\`pnpm install\`, \`bun install\`, etc.)
-2. Run the project's type checker if available (\`tsc --noEmit\`, \`bun run check\`, etc.)
-3. Tell the user: "Run \\\`/vx-verify\\\` to confirm telemetry flows correctly."
+1. Run the project's type checker if available (\`tsc --noEmit\`, \`bun run check\`, etc.)
+2. Tell the user: "Run \\\`/vx-verify\\\` to confirm telemetry flows correctly."
 
 ## Rules
 
 1. NEVER overwrite an existing tracing/instrumentation file. If it exists, analyze it \u2014 don't replace it.
 2. NEVER remove existing OTel configuration or dependencies.
 3. If existing OTel already points to \`:4318\`, do NOTHING. Report success.
-4. Prefer environment variables over hardcoded URLs. Use \`OTEL_EXPORTER_OTLP_ENDPOINT\` when possible.
+4. Prefer environment variables over hardcoded URLs.
 5. Bun runtime NEVER gets \`@opentelemetry/auto-instrumentations-node\`.
 6. The OTLP endpoint is always \`http://localhost:4318\` (HTTP, not gRPC).
 7. For monorepos: report findings per workspace. Handle each independently.
-8. When adding dependencies, respect existing versions \u2014 never downgrade.
-9. After any code change, verify it compiles (run type checker).`;
+8. Install dependencies inside each app workspace, never in the monorepo root. Use the project's package manager (\`pnpm add\`, \`bun add\`, \`npm install\`).
+9. When adding dependencies, respect existing versions \u2014 never downgrade.
+10. After any code change, verify it compiles (run type checker).
+11. Detect and follow the project's env file pattern. Never hardcode which env file to use.`;
 var VX_VERIFY_SKILL = `---
 name: vx-verify
 description: Verify that OpenTelemetry telemetry flows from the app to the vx observability stack

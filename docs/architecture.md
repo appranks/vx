@@ -104,20 +104,18 @@ src/
 
 ## Integration
 
-`vx init` is the single entry point for integrating `vx` into any project. It:
+`vx init` installs two Claude Code skills and appends a `## vx` block to the project's `CLAUDE.md`:
 
-1. Detects the framework from `package.json` (hono, next, or generic)
-2. Generates `instrumentation.ts` with the correct OTel SDK setup
-3. Creates `.env.otel` with endpoint configuration as reference
-4. Injects OTel dependencies into `package.json`
-5. Appends a `## vx` block to the project's `CLAUDE.md`
+1. `/vx-setup` — The agent analyzes the project, detects frameworks and existing OTel config, and makes minimal changes
+2. `/vx-verify` — The agent verifies telemetry flows from the app to the vx stack
 
-The CLAUDE.md block gives the coding agent full context: available commands, endpoints, query languages, and the recommended workflow. The agent reads CLAUDE.md at session start and knows `vx` is available without any manual configuration.
+This is a **Claude-first approach**: the CLI doesn't generate code deterministically. Instead, the agent reads the skill instructions and acts intelligently — handling monorepos, existing configurations, different frameworks, and env patterns.
 
 ```
-pnpm add -D @appranks/vx    # install
-vx init                      # instrument + write CLAUDE.md
-pnpm install                 # install OTel deps
+pnpm add -Dw @appranks/vx   # install
+npx vx init                  # copy skills + CLAUDE.md
+/vx-setup                    # agent configures OTel
+/vx-verify                   # agent verifies connection
 ```
 
 After this, the agent's workflow becomes:
