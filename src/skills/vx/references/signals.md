@@ -128,26 +128,28 @@ logRecordProcessors: [
 
 ### Dependencies for all 3 signals
 
+Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions — they go stale quickly. Use `npm view <package> version` or check the package's npm page.
+
 ```bash
 # Core (required for all)
-@opentelemetry/api@1.9.0
-@opentelemetry/sdk-node@0.213.0
-@opentelemetry/resources@2.0.0
-@opentelemetry/semantic-conventions@1.35.0
+@opentelemetry/api
+@opentelemetry/sdk-node
+@opentelemetry/resources
+@opentelemetry/semantic-conventions
 
 # Traces
-@opentelemetry/exporter-trace-otlp-http@0.213.0
+@opentelemetry/exporter-trace-otlp-http
 
 # Metrics
-@opentelemetry/exporter-metrics-otlp-http@0.213.0
-@opentelemetry/sdk-metrics@2.0.0
+@opentelemetry/exporter-metrics-otlp-http
+@opentelemetry/sdk-metrics
 
 # Logs
-@opentelemetry/exporter-logs-otlp-http@0.213.0
-@opentelemetry/sdk-logs@0.213.0
+@opentelemetry/exporter-logs-otlp-http
+@opentelemetry/sdk-logs
 
 # Auto-instrumentation (Node.js only, NOT Bun)
-@opentelemetry/auto-instrumentations-node@0.71.0
+@opentelemetry/auto-instrumentations-node
 
 # Pino log transport (if app uses Pino)
 pino-opentelemetry-transport

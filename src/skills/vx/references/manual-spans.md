@@ -134,10 +134,10 @@ export async function findProjectById(db: Database, id: string) {
 
 ## Dependency
 
-The only dependency a library package needs:
+The only dependency a library package needs (look up the latest stable version on npm before installing):
 
 ```bash
-pnpm add @opentelemetry/api@1.9.0
+pnpm add @opentelemetry/api
 ```
 
 This is the **only** OpenTelemetry package a library should depend on. Never add `@opentelemetry/sdk-node`, exporters, or processors to a library package.

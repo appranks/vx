@@ -548,17 +548,19 @@ Or in \`package.json\` scripts:
 
 ## Install dependencies
 
+Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions \u2014 they go stale quickly. Use \`npm view <package> version\` or check the package's npm page.
+
 \`\`\`bash
-bun add @hono/otel@1.1.1 \\
-  @opentelemetry/api@1.9.0 \\
-  @opentelemetry/sdk-node@0.213.0 \\
-  @opentelemetry/exporter-trace-otlp-http@0.213.0 \\
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \\
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \\
-  @opentelemetry/resources@2.0.0 \\
-  @opentelemetry/sdk-metrics@2.0.0 \\
-  @opentelemetry/sdk-logs@0.213.0 \\
-  @opentelemetry/semantic-conventions@1.35.0
+bun add @hono/otel \\
+  @opentelemetry/api \\
+  @opentelemetry/sdk-node \\
+  @opentelemetry/exporter-trace-otlp-http \\
+  @opentelemetry/exporter-metrics-otlp-http \\
+  @opentelemetry/exporter-logs-otlp-http \\
+  @opentelemetry/resources \\
+  @opentelemetry/sdk-metrics \\
+  @opentelemetry/sdk-logs \\
+  @opentelemetry/semantic-conventions
 \`\`\`
 
 **IMPORTANT:** NEVER add \`@opentelemetry/auto-instrumentations-node\` for Bun projects. It will fail at runtime.
@@ -992,10 +994,10 @@ export async function findProjectById(db: Database, id: string) {
 
 ## Dependency
 
-The only dependency a library package needs:
+The only dependency a library package needs (look up the latest stable version on npm before installing):
 
 \`\`\`bash
-pnpm add @opentelemetry/api@1.9.0
+pnpm add @opentelemetry/api
 \`\`\`
 
 This is the **only** OpenTelemetry package a library should depend on. Never add \`@opentelemetry/sdk-node\`, exporters, or processors to a library package.
@@ -1083,15 +1085,15 @@ Next.js \`instrumentation.ts\` supports async \`register()\` functions. The dyna
 
 ## Install dependencies
 
-Run inside the Next.js app directory:
+Run inside the Next.js app directory. Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions \u2014 they go stale quickly. Use \`npm view <package> version\` or check the package's npm page.
 
 \`\`\`bash
-pnpm add @vercel/otel@2.1.1 \\
-  @opentelemetry/api@1.9.0 \\
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \\
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \\
-  @opentelemetry/sdk-metrics@2.0.0 \\
-  @opentelemetry/sdk-logs@0.213.0
+pnpm add @vercel/otel \\
+  @opentelemetry/api \\
+  @opentelemetry/exporter-metrics-otlp-http \\
+  @opentelemetry/exporter-logs-otlp-http \\
+  @opentelemetry/sdk-metrics \\
+  @opentelemetry/sdk-logs
 \`\`\`
 
 ## What gets instrumented
@@ -1266,26 +1268,25 @@ This adds middleware-level route tracing on top of the auto-instrumentation (HTT
 
 ## Install dependencies
 
-Run inside the app directory using the project's package manager:
+Run inside the app directory using the project's package manager. Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions \u2014 they go stale quickly. Use \`npm view <package> version\` or check the package's npm page.
 
 \`\`\`bash
-# pnpm (monorepo)
-pnpm add @opentelemetry/api@1.9.0 \\
-  @opentelemetry/sdk-node@0.213.0 \\
-  @opentelemetry/auto-instrumentations-node@0.71.0 \\
-  @opentelemetry/exporter-trace-otlp-http@0.213.0 \\
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \\
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \\
-  @opentelemetry/resources@2.0.0 \\
-  @opentelemetry/sdk-metrics@2.0.0 \\
-  @opentelemetry/sdk-logs@0.213.0 \\
-  @opentelemetry/semantic-conventions@1.35.0
+pnpm add @opentelemetry/api \\
+  @opentelemetry/sdk-node \\
+  @opentelemetry/auto-instrumentations-node \\
+  @opentelemetry/exporter-trace-otlp-http \\
+  @opentelemetry/exporter-metrics-otlp-http \\
+  @opentelemetry/exporter-logs-otlp-http \\
+  @opentelemetry/resources \\
+  @opentelemetry/sdk-metrics \\
+  @opentelemetry/sdk-logs \\
+  @opentelemetry/semantic-conventions
 
 # If app uses Pino (required for logger.ts):
 pnpm add pino-opentelemetry-transport
 
 # For Hono on Node, also:
-pnpm add @hono/otel@1.1.1
+pnpm add @hono/otel
 \`\`\`
 
 For npm: replace \`pnpm add\` with \`npm install\`.
@@ -1448,26 +1449,28 @@ logRecordProcessors: [
 
 ### Dependencies for all 3 signals
 
+Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions \u2014 they go stale quickly. Use \`npm view <package> version\` or check the package's npm page.
+
 \`\`\`bash
 # Core (required for all)
-@opentelemetry/api@1.9.0
-@opentelemetry/sdk-node@0.213.0
-@opentelemetry/resources@2.0.0
-@opentelemetry/semantic-conventions@1.35.0
+@opentelemetry/api
+@opentelemetry/sdk-node
+@opentelemetry/resources
+@opentelemetry/semantic-conventions
 
 # Traces
-@opentelemetry/exporter-trace-otlp-http@0.213.0
+@opentelemetry/exporter-trace-otlp-http
 
 # Metrics
-@opentelemetry/exporter-metrics-otlp-http@0.213.0
-@opentelemetry/sdk-metrics@2.0.0
+@opentelemetry/exporter-metrics-otlp-http
+@opentelemetry/sdk-metrics
 
 # Logs
-@opentelemetry/exporter-logs-otlp-http@0.213.0
-@opentelemetry/sdk-logs@0.213.0
+@opentelemetry/exporter-logs-otlp-http
+@opentelemetry/sdk-logs
 
 # Auto-instrumentation (Node.js only, NOT Bun)
-@opentelemetry/auto-instrumentations-node@0.71.0
+@opentelemetry/auto-instrumentations-node
 
 # Pino log transport (if app uses Pino)
 pino-opentelemetry-transport
@@ -1475,7 +1478,7 @@ pino-opentelemetry-transport
 `;
 
 // src/skills/vx/SKILL.md
-var SKILL_default = '---\nname: vx\ndescription: Configure and verify OpenTelemetry instrumentation so this project sends traces, metrics, and logs to the vx observability stack. Use when setting up observability or when telemetry is not flowing.\n---\n\n# vx \u2014 OpenTelemetry Setup & Verification\n\nConfigure OpenTelemetry to send **all three signals** (traces, metrics, logs) to the vx stack at `http://localhost:4318`, then verify telemetry flows correctly.\n\n## Phase 1: Analyze the project\n\n1. Detect project type:\n   - `package.json` \u2192 JavaScript/TypeScript\n   - `go.mod` \u2192 Go (see note below)\n   - `pyproject.toml` or `requirements.txt` \u2192 Python (see note below)\n   - If not JS/TS: report "Only JavaScript/TypeScript is supported. Manual setup required." and stop.\n2. Check for monorepo: `workspaces` in `package.json`, `pnpm-workspace.yaml`, or `lerna.json`.\n3. If monorepo: identify app directories (typically `apps/*`, `services/*`, or `packages/` with servers).\n4. For each app (or root if single-package):\n   - **Framework**: detect from dependencies \u2014 `@nestjs/core`, `hono`, `next`, `express`, `fastify`, `@temporalio/worker`\n   - **Runtime**: `bun` in devDependencies or `bunfig.toml` exists \u2192 Bun. Otherwise \u2192 Node.\n   - **Logger**: detect from dependencies \u2014 `pino`, `winston`, `bunyan`\n   - **Existing OTel**: grep for `@opentelemetry`, `OTLPTraceExporter`, `NodeSDK`, `registerOTel`, `@hono/otel` in source files. Check for `tracing.ts`, `instrumentation.ts`, or `telemetry.ts` files.\n   - If found: read the file and note which signals are configured (trace exporter, metric reader, log processor).\n5. Detect env file pattern per app:\n   - `.env.local` exists \u2192 use `.env.local`\n   - `.env.development` exists \u2192 use `.env.development`\n   - `.env` exists \u2192 use `.env`\n   - None exist \u2192 create `.env.local`\n6. Detect packages/libraries in the monorepo that are NOT apps but contain business logic (SDK wrappers, DB layers, etc.).\n\n## Phase 2: Configure per app\n\n### Step 1: Apply OTel SDK template\n\nApply the FIRST matching rule:\n\n| Condition | Action |\n|-----------|--------|\n| OTel exists with all 3 signals exporting to `:4318` | Report: "Fully configured. No changes needed." |\n| OTel exists but missing signals (e.g., only traces) | Complete the setup \u2014 see [references/signals.md](references/signals.md) for what to add |\n| OTel exists but exports to different URL | Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the detected env file |\n| No OTel AND Next.js | Apply template from [references/nextjs.md](references/nextjs.md) |\n| No OTel AND Bun runtime | Apply template from [references/bun.md](references/bun.md) |\n| No OTel AND Node runtime | Apply template from [references/node.md](references/node.md) |\n\n### Step 2: Configure the application logger for log sending\n\nAfter applying the SDK template, if the app uses a logger, the logger MUST be configured to send logs to OTel. The SDK\'s `tracing.ts` alone does NOT produce application logs \u2014 it only configures the log pipeline. The logger itself needs a transport.\n\n| Condition | Action |\n|-----------|--------|\n| App uses Pino | **Configure `pino-opentelemetry-transport`** \u2014 see the logger template in [references/node.md](references/node.md#template-srcloggerts) |\n| App uses Winston | Configure Winston OTel transport \u2014 see [references/log-bridges.md](references/log-bridges.md) |\n| App uses Bunyan | Configure Bunyan OTel transport \u2014 see [references/log-bridges.md](references/log-bridges.md) |\n| App has NO logger | `logRecordProcessors` in the SDK is sufficient \u2014 only OTel-native log records will flow |\n| Next.js without explicit logger | Logs from `console.log` are NOT captured. This is expected \u2014 see [references/nextjs.md](references/nextjs.md#logs-in-nextjs) |\n\n**CRITICAL:** Do NOT rely on `@opentelemetry/instrumentation-pino` for log bridging. It fails silently with ESM + tsx + pnpm. Always use the explicit transport approach shown in node.md.\n\n### Step 3: Additional recommendations\n\n| Condition | Action |\n|-----------|--------|\n| Monorepo has library packages with I/O | Recommend manual spans \u2014 see [references/manual-spans.md](references/manual-spans.md) |\n\n### After applying changes\n\n1. Set env vars in the detected env file \u2014 see [references/env-vars.md](references/env-vars.md)\n2. **If using Pino:** verify that `OTEL_EXPORTER_OTLP_ENDPOINT` is set in the env file (required by the transport worker thread \u2014 it does NOT inherit from the NodeSDK)\n3. Install all added dependencies (both OTel SDK packages AND `pino-opentelemetry-transport` if applicable)\n4. Run the project\'s type checker (`tsc --noEmit`, `bun run check`, etc.)\n5. Proceed to Phase 3 (Verify).\n\n## Phase 3: Verify\n\n### Step 1 \u2014 Check vx stack\n\n```bash\nnpx vx status\n```\n\n- All services `healthy` \u2192 proceed.\n- Any `unreachable` \u2192 run `npx vx up`, wait, re-check.\n- `vx up` fails \u2192 report error and stop.\n\n### Step 2 \u2014 Ensure app is running\n\n- Detect start command from `package.json` scripts (`dev`, `start`).\n- Check if the app\'s port responds to HTTP.\n- If not running: ask the user to start it in a separate terminal.\n\n### Step 3 \u2014 Query telemetry\n\nWait ~20 seconds after the app starts (metrics flush every 15s, log batches every 5s), then:\n\n```bash\nnpx vx traces \'*\'\nnpx vx metrics \'{__name__=~".+"}\'\nnpx vx logs \'*\'\n```\n\n### Step 4 \u2014 Report\n\nFor each signal, report:\n\n| Signal | Result | Details |\n|--------|--------|---------|\n| Traces | Found N spans / No data | Show sample span if found |\n| Metrics | Found N series / No data | Show sample metric name if found |\n| Logs | Found N entries / No data | Show sample log message if found |\n\nEvaluate result:\n\n- **All 3 signals return data** \u2192 SUCCESS\n- **Some signals return data** \u2192 PARTIAL \u2014 explain which are missing and run diagnostics for the missing signal from [references/diagnostics.md](references/diagnostics.md)\n- **No signals return data** \u2192 FAIL \u2014 run full diagnostics from [references/diagnostics.md](references/diagnostics.md)\n\n### Step 5 \u2014 Coverage checklist\n\nPresent a final summary table per app:\n\n```\n| Check                              | Status |\n|------------------------------------|--------|\n| tracing.ts / instrumentation.ts    | \u2713 / \u2717  |\n| Trace exporter configured          | \u2713 / \u2717  |\n| Metric reader configured           | \u2713 / \u2717  |\n| Log processor configured           | \u2713 / \u2717  |\n| Logger transport (Pino/Winston)    | \u2713 / \u2717 / N/A |\n| Trace correlation (mixin)          | \u2713 / \u2717 / N/A |\n| Env vars set                       | \u2713 / \u2717  |\n| Type check passes                  | \u2713 / \u2717  |\n| Traces verified in vx              | \u2713 / \u2717  |\n| Metrics verified in vx             | \u2713 / \u2717  |\n| Logs verified in vx                | \u2713 / \u2717  |\n```\n\n**Coverage score:** Count \u2713 items / total applicable items (exclude N/A). Report as percentage.\n\n## Rules\n\n1. NEVER overwrite an existing tracing/instrumentation file. Analyze it \u2014 don\'t replace it.\n2. NEVER remove existing OTel configuration or dependencies.\n3. If existing OTel already has all 3 signals pointing to `:4318`, do NOTHING.\n4. Prefer environment variables over hardcoded URLs.\n5. Bun runtime NEVER gets `@opentelemetry/auto-instrumentations-node`.\n6. The OTLP endpoint is always `http://localhost:4318` (HTTP, not gRPC).\n7. For monorepos: handle each app independently. Report findings per workspace.\n8. Install dependencies inside each app workspace, not in the monorepo root.\n9. When adding dependencies, respect existing versions \u2014 never downgrade.\n10. After any code change, verify it compiles (run type checker).\n11. Detect and follow the project\'s env file pattern. Never hardcode which env file to use.\n12. All three signals must be configured. Traces-only is incomplete.\n13. Library packages use `@opentelemetry/api` only \u2014 never the SDK.\n14. When an app uses Pino, always configure `pino-opentelemetry-transport`. Do NOT assume auto-instrumentation will handle logs.\n15. The logger template (`logger.ts`) is as critical as `tracing.ts`. Both must be created for apps with Pino.\n\n## References\n\n- [The three signals](references/signals.md) \u2014 What traces, metrics, and logs provide and how to configure each\n- [Node.js template](references/node.md) \u2014 NodeSDK + Pino logger with all 3 signals (Hono, Express, NestJS, Fastify)\n- [Next.js template](references/nextjs.md) \u2014 @vercel/otel with all 3 signals\n- [Bun template](references/bun.md) \u2014 Bun-specific setup and limitations\n- [Log bridges](references/log-bridges.md) \u2014 Pino transport setup (recommended) and auto-instrumentation fallback\n- [Manual spans](references/manual-spans.md) \u2014 When and how library packages add custom spans\n- [Diagnostics](references/diagnostics.md) \u2014 Troubleshooting when telemetry is not flowing\n- [Environment variables](references/env-vars.md) \u2014 Complete OTel env var reference\n';
+var SKILL_default = '---\nname: vx\ndescription: Configure and verify OpenTelemetry instrumentation so this project sends traces, metrics, and logs to the vx observability stack. Use when setting up observability or when telemetry is not flowing.\n---\n\n# vx \u2014 OpenTelemetry Setup & Verification\n\nConfigure OpenTelemetry to send **all three signals** (traces, metrics, logs) to the vx stack at `http://localhost:4318`, then verify telemetry flows correctly.\n\n## Phase 1: Analyze the project\n\n1. Detect project type:\n   - `package.json` \u2192 JavaScript/TypeScript\n   - `go.mod` \u2192 Go (see note below)\n   - `pyproject.toml` or `requirements.txt` \u2192 Python (see note below)\n   - If not JS/TS: report "Only JavaScript/TypeScript is supported. Manual setup required." and stop.\n2. Check for monorepo: `workspaces` in `package.json`, `pnpm-workspace.yaml`, or `lerna.json`.\n3. If monorepo: identify app directories (typically `apps/*`, `services/*`, or `packages/` with servers).\n4. For each app (or root if single-package):\n   - **Framework**: detect from dependencies \u2014 `@nestjs/core`, `hono`, `next`, `express`, `fastify`, `@temporalio/worker`\n   - **Runtime**: `bun` in devDependencies or `bunfig.toml` exists \u2192 Bun. Otherwise \u2192 Node.\n   - **Logger**: detect from dependencies \u2014 `pino`, `winston`, `bunyan`\n   - **Existing OTel**: grep for `@opentelemetry`, `OTLPTraceExporter`, `NodeSDK`, `registerOTel`, `@hono/otel` in source files. Check for `tracing.ts`, `instrumentation.ts`, or `telemetry.ts` files.\n   - If found: read the file and note which signals are configured (trace exporter, metric reader, log processor).\n5. Detect env file pattern per app:\n   - `.env.local` exists \u2192 use `.env.local`\n   - `.env.development` exists \u2192 use `.env.development`\n   - `.env` exists \u2192 use `.env`\n   - None exist \u2192 create `.env.local`\n6. Detect packages/libraries in the monorepo that are NOT apps but contain business logic (SDK wrappers, DB layers, etc.).\n\n## Phase 2: Configure per app\n\n### Step 1: Apply OTel SDK template\n\nApply the FIRST matching rule:\n\n| Condition                                           | Action                                                                                  |\n| --------------------------------------------------- | --------------------------------------------------------------------------------------- |\n| OTel exists with all 3 signals exporting to `:4318` | Report: "Fully configured. No changes needed."                                          |\n| OTel exists but missing signals (e.g., only traces) | Complete the setup \u2014 see [references/signals.md](references/signals.md) for what to add |\n| OTel exists but exports to different URL            | Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the detected env file        |\n| No OTel AND Next.js                                 | Apply template from [references/nextjs.md](references/nextjs.md)                        |\n| No OTel AND Bun runtime                             | Apply template from [references/bun.md](references/bun.md)                              |\n| No OTel AND Node runtime                            | Apply template from [references/node.md](references/node.md)                            |\n\n### Step 2: Configure the application logger for log sending\n\nAfter applying the SDK template, if the app uses a logger, the logger MUST be configured to send logs to OTel. The SDK\'s `tracing.ts` alone does NOT produce application logs \u2014 it only configures the log pipeline. The logger itself needs a transport.\n\n| Condition                       | Action                                                                                                             |\n| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |\n| App uses Pino                   | **Configure `pino-opentelemetry-transport`** \u2014 see the logger template in [references/node.md](references/node.md) |\n| App uses Winston                | Configure Winston OTel transport \u2014 see [references/log-bridges.md](references/log-bridges.md)                      |\n| App uses Bunyan                 | Configure Bunyan OTel transport \u2014 see [references/log-bridges.md](references/log-bridges.md)                       |\n| App has NO logger               | `logRecordProcessors` in the SDK is sufficient \u2014 only OTel-native log records will flow                            |\n| Next.js without explicit logger | Logs from `console.log` are NOT captured. This is expected \u2014 see [references/nextjs.md](references/nextjs.md)      |\n\n**CRITICAL:** Do NOT rely on `@opentelemetry/instrumentation-pino` for log bridging. It fails silently with ESM + tsx + pnpm. Always use the explicit transport approach shown in node.md.\n\n### Step 3: Additional recommendations\n\n| Condition                              | Action                                                                                |\n| -------------------------------------- | ------------------------------------------------------------------------------------- |\n| Monorepo has library packages with I/O | Recommend manual spans \u2014 see [references/manual-spans.md](references/manual-spans.md) |\n\n### After applying changes\n\n1. Set env vars in the detected env file \u2014 see [references/env-vars.md](references/env-vars.md)\n2. **If using Pino:** verify that `OTEL_EXPORTER_OTLP_ENDPOINT` is set in the env file (required by the transport worker thread \u2014 it does NOT inherit from the NodeSDK)\n3. Install all added dependencies (both OTel SDK packages AND `pino-opentelemetry-transport` if applicable)\n4. Run the project\'s type checker (`tsc --noEmit`, `bun run check`, etc.)\n5. Proceed to Phase 3 (Verify).\n\n## Phase 3: Verify\n\n### Step 1 \u2014 Check vx stack\n\n```bash\nnpx vx status\n```\n\n- All services `healthy` \u2192 proceed.\n- Any `unreachable` \u2192 run `npx vx up`, wait, re-check.\n- `vx up` fails \u2192 report error and stop.\n\n### Step 2 \u2014 Ensure app is running\n\n- Detect start command from `package.json` scripts (`dev`, `start`).\n- Check if the app\'s port responds to HTTP.\n- If not running: ask the user to start it in a separate terminal.\n\n### Step 3 \u2014 Query telemetry\n\nWait ~20 seconds after the app starts (metrics flush every 15s, log batches every 5s), then:\n\n```bash\nnpx vx traces \'*\'\nnpx vx metrics \'{__name__=~".+"}\'\nnpx vx logs \'*\'\n```\n\n### Step 4 \u2014 Report\n\nFor each signal, report:\n\n| Signal  | Result                    | Details                          |\n| ------- | ------------------------- | -------------------------------- |\n| Traces  | Found N spans / No data   | Show sample span if found        |\n| Metrics | Found N series / No data  | Show sample metric name if found |\n| Logs    | Found N entries / No data | Show sample log message if found |\n\nEvaluate result:\n\n- **All 3 signals return data** \u2192 SUCCESS\n- **Some signals return data** \u2192 PARTIAL \u2014 explain which are missing and run diagnostics for the missing signal from [references/diagnostics.md](references/diagnostics.md)\n- **No signals return data** \u2192 FAIL \u2014 run full diagnostics from [references/diagnostics.md](references/diagnostics.md)\n\n### Step 5 \u2014 Coverage checklist\n\nPresent a final summary table per app:\n\n```\n| Check                              | Status |\n|------------------------------------|--------|\n| tracing.ts / instrumentation.ts    | \u2713 / \u2717  |\n| Trace exporter configured          | \u2713 / \u2717  |\n| Metric reader configured           | \u2713 / \u2717  |\n| Log processor configured           | \u2713 / \u2717  |\n| Logger transport (Pino/Winston)    | \u2713 / \u2717 / N/A |\n| Trace correlation (mixin)          | \u2713 / \u2717 / N/A |\n| Env vars set                       | \u2713 / \u2717  |\n| Type check passes                  | \u2713 / \u2717  |\n| Traces verified in vx              | \u2713 / \u2717  |\n| Metrics verified in vx             | \u2713 / \u2717  |\n| Logs verified in vx                | \u2713 / \u2717  |\n```\n\n**Coverage score:** Count \u2713 items / total applicable items (exclude N/A). Report as percentage.\n\n## Rules\n\n1. NEVER overwrite an existing tracing/instrumentation file. Analyze it \u2014 don\'t replace it.\n2. NEVER remove existing OTel configuration or dependencies.\n3. If existing OTel already has all 3 signals pointing to `:4318`, do NOTHING.\n4. Prefer environment variables over hardcoded URLs.\n5. Bun runtime NEVER gets `@opentelemetry/auto-instrumentations-node`.\n6. The OTLP endpoint is always `http://localhost:4318` (HTTP, not gRPC).\n7. For monorepos: handle each app independently. Report findings per workspace.\n8. Install dependencies inside each app workspace, not in the monorepo root.\n9. When adding dependencies, respect existing versions \u2014 never downgrade.\n10. After any code change, verify it compiles (run type checker).\n11. Detect and follow the project\'s env file pattern. Never hardcode which env file to use.\n12. All three signals must be configured. Traces-only is incomplete.\n13. Library packages use `@opentelemetry/api` only \u2014 never the SDK.\n14. When an app uses Pino, always configure `pino-opentelemetry-transport`. Do NOT assume auto-instrumentation will handle logs.\n15. The logger template (`logger.ts`) is as critical as `tracing.ts`. Both must be created for apps with Pino.\n\n## References\n\n- [The three signals](references/signals.md) \u2014 What traces, metrics, and logs provide and how to configure each\n- [Node.js template](references/node.md) \u2014 NodeSDK + Pino logger with all 3 signals (Hono, Express, NestJS, Fastify)\n- [Next.js template](references/nextjs.md) \u2014 @vercel/otel with all 3 signals\n- [Bun template](references/bun.md) \u2014 Bun-specific setup and limitations\n- [Log bridges](references/log-bridges.md) \u2014 Pino transport setup (recommended) and auto-instrumentation fallback\n- [Manual spans](references/manual-spans.md) \u2014 When and how library packages add custom spans\n- [Diagnostics](references/diagnostics.md) \u2014 Troubleshooting when telemetry is not flowing\n- [Environment variables](references/env-vars.md) \u2014 Complete OTel env var reference\n';
 
 // src/skills/content.ts
 var VX_SKILL = SKILL_default;

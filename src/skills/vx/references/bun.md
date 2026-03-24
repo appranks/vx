@@ -98,17 +98,19 @@ Or in `package.json` scripts:
 
 ## Install dependencies
 
+Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions — they go stale quickly. Use `npm view <package> version` or check the package's npm page.
+
 ```bash
-bun add @hono/otel@1.1.1 \
-  @opentelemetry/api@1.9.0 \
-  @opentelemetry/sdk-node@0.213.0 \
-  @opentelemetry/exporter-trace-otlp-http@0.213.0 \
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \
-  @opentelemetry/resources@2.0.0 \
-  @opentelemetry/sdk-metrics@2.0.0 \
-  @opentelemetry/sdk-logs@0.213.0 \
-  @opentelemetry/semantic-conventions@1.35.0
+bun add @hono/otel \
+  @opentelemetry/api \
+  @opentelemetry/sdk-node \
+  @opentelemetry/exporter-trace-otlp-http \
+  @opentelemetry/exporter-metrics-otlp-http \
+  @opentelemetry/exporter-logs-otlp-http \
+  @opentelemetry/resources \
+  @opentelemetry/sdk-metrics \
+  @opentelemetry/sdk-logs \
+  @opentelemetry/semantic-conventions
 ```
 
 **IMPORTANT:** NEVER add `@opentelemetry/auto-instrumentations-node` for Bun projects. It will fail at runtime.

@@ -146,26 +146,25 @@ This adds middleware-level route tracing on top of the auto-instrumentation (HTT
 
 ## Install dependencies
 
-Run inside the app directory using the project's package manager:
+Run inside the app directory using the project's package manager. Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions — they go stale quickly. Use `npm view <package> version` or check the package's npm page.
 
 ```bash
-# pnpm (monorepo)
-pnpm add @opentelemetry/api@1.9.0 \
-  @opentelemetry/sdk-node@0.213.0 \
-  @opentelemetry/auto-instrumentations-node@0.71.0 \
-  @opentelemetry/exporter-trace-otlp-http@0.213.0 \
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \
-  @opentelemetry/resources@2.0.0 \
-  @opentelemetry/sdk-metrics@2.0.0 \
-  @opentelemetry/sdk-logs@0.213.0 \
-  @opentelemetry/semantic-conventions@1.35.0
+pnpm add @opentelemetry/api \
+  @opentelemetry/sdk-node \
+  @opentelemetry/auto-instrumentations-node \
+  @opentelemetry/exporter-trace-otlp-http \
+  @opentelemetry/exporter-metrics-otlp-http \
+  @opentelemetry/exporter-logs-otlp-http \
+  @opentelemetry/resources \
+  @opentelemetry/sdk-metrics \
+  @opentelemetry/sdk-logs \
+  @opentelemetry/semantic-conventions
 
 # If app uses Pino (required for logger.ts):
 pnpm add pino-opentelemetry-transport
 
 # For Hono on Node, also:
-pnpm add @hono/otel@1.1.1
+pnpm add @hono/otel
 ```
 
 For npm: replace `pnpm add` with `npm install`.

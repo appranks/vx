@@ -68,15 +68,15 @@ Next.js `instrumentation.ts` supports async `register()` functions. The dynamic 
 
 ## Install dependencies
 
-Run inside the Next.js app directory:
+Run inside the Next.js app directory. Before installing, look up the latest stable version of each package on npm. Do NOT use hardcoded versions — they go stale quickly. Use `npm view <package> version` or check the package's npm page.
 
 ```bash
-pnpm add @vercel/otel@2.1.1 \
-  @opentelemetry/api@1.9.0 \
-  @opentelemetry/exporter-metrics-otlp-http@0.213.0 \
-  @opentelemetry/exporter-logs-otlp-http@0.213.0 \
-  @opentelemetry/sdk-metrics@2.0.0 \
-  @opentelemetry/sdk-logs@0.213.0
+pnpm add @vercel/otel \
+  @opentelemetry/api \
+  @opentelemetry/exporter-metrics-otlp-http \
+  @opentelemetry/exporter-logs-otlp-http \
+  @opentelemetry/sdk-metrics \
+  @opentelemetry/sdk-logs
 ```
 
 ## What gets instrumented

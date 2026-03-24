@@ -35,33 +35,33 @@ Configure OpenTelemetry to send **all three signals** (traces, metrics, logs) to
 
 Apply the FIRST matching rule:
 
-| Condition | Action |
-|-----------|--------|
-| OTel exists with all 3 signals exporting to `:4318` | Report: "Fully configured. No changes needed." |
+| Condition                                           | Action                                                                                  |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| OTel exists with all 3 signals exporting to `:4318` | Report: "Fully configured. No changes needed."                                          |
 | OTel exists but missing signals (e.g., only traces) | Complete the setup — see [references/signals.md](references/signals.md) for what to add |
-| OTel exists but exports to different URL | Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the detected env file |
-| No OTel AND Next.js | Apply template from [references/nextjs.md](references/nextjs.md) |
-| No OTel AND Bun runtime | Apply template from [references/bun.md](references/bun.md) |
-| No OTel AND Node runtime | Apply template from [references/node.md](references/node.md) |
+| OTel exists but exports to different URL            | Set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` in the detected env file        |
+| No OTel AND Next.js                                 | Apply template from [references/nextjs.md](references/nextjs.md)                        |
+| No OTel AND Bun runtime                             | Apply template from [references/bun.md](references/bun.md)                              |
+| No OTel AND Node runtime                            | Apply template from [references/node.md](references/node.md)                            |
 
 ### Step 2: Configure the application logger for log sending
 
 After applying the SDK template, if the app uses a logger, the logger MUST be configured to send logs to OTel. The SDK's `tracing.ts` alone does NOT produce application logs — it only configures the log pipeline. The logger itself needs a transport.
 
-| Condition | Action |
-|-----------|--------|
-| App uses Pino | **Configure `pino-opentelemetry-transport`** — see the logger template in [references/node.md](references/node.md#template-srcloggerts) |
-| App uses Winston | Configure Winston OTel transport — see [references/log-bridges.md](references/log-bridges.md) |
-| App uses Bunyan | Configure Bunyan OTel transport — see [references/log-bridges.md](references/log-bridges.md) |
-| App has NO logger | `logRecordProcessors` in the SDK is sufficient — only OTel-native log records will flow |
-| Next.js without explicit logger | Logs from `console.log` are NOT captured. This is expected — see [references/nextjs.md](references/nextjs.md#logs-in-nextjs) |
+| Condition                       | Action                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| App uses Pino                   | **Configure `pino-opentelemetry-transport`** — see the logger template in [references/node.md](references/node.md) |
+| App uses Winston                | Configure Winston OTel transport — see [references/log-bridges.md](references/log-bridges.md)                      |
+| App uses Bunyan                 | Configure Bunyan OTel transport — see [references/log-bridges.md](references/log-bridges.md)                       |
+| App has NO logger               | `logRecordProcessors` in the SDK is sufficient — only OTel-native log records will flow                            |
+| Next.js without explicit logger | Logs from `console.log` are NOT captured. This is expected — see [references/nextjs.md](references/nextjs.md)      |
 
 **CRITICAL:** Do NOT rely on `@opentelemetry/instrumentation-pino` for log bridging. It fails silently with ESM + tsx + pnpm. Always use the explicit transport approach shown in node.md.
 
 ### Step 3: Additional recommendations
 
-| Condition | Action |
-|-----------|--------|
+| Condition                              | Action                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------- |
 | Monorepo has library packages with I/O | Recommend manual spans — see [references/manual-spans.md](references/manual-spans.md) |
 
 ### After applying changes
@@ -104,11 +104,11 @@ npx vx logs '*'
 
 For each signal, report:
 
-| Signal | Result | Details |
-|--------|--------|---------|
-| Traces | Found N spans / No data | Show sample span if found |
-| Metrics | Found N series / No data | Show sample metric name if found |
-| Logs | Found N entries / No data | Show sample log message if found |
+| Signal  | Result                    | Details                          |
+| ------- | ------------------------- | -------------------------------- |
+| Traces  | Found N spans / No data   | Show sample span if found        |
+| Metrics | Found N series / No data  | Show sample metric name if found |
+| Logs    | Found N entries / No data | Show sample log message if found |
 
 Evaluate result:
 
